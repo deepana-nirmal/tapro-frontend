@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --bg-base: #f8fafc;
+    --bg-elevated: #ffffff;
+    --bg-panel: #ffffff;
+    --line-soft: #e2e8f0;
+    --line-strong: rgba(16, 185, 129, 0.16);
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --accent-a: #10b981;
+    --accent-b: #f59e0b;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html {
+    background:
+      radial-gradient(circle at top left, rgba(16, 185, 129, 0.08), transparent 24%),
+      linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+  }
+
+  body {
+    margin: 0;
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top left, rgba(16, 185, 129, 0.08), transparent 22%),
+      radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 20%),
+      linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  html.dark body {
+    background:
+      radial-gradient(circle at top left, rgba(16, 185, 129, 0.12), transparent 24%),
+      radial-gradient(circle at top right, rgba(245, 158, 11, 0.1), transparent 22%),
+      linear-gradient(180deg, #020617 0%, #0b1120 100%);
+    color: #e2e8f0;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  *::selection {
+    background: rgba(16, 185, 129, 0.22);
+    color: #0f172a;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer utilities {
+  .font-editorial {
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  .skeleton {
+    background-image: linear-gradient(90deg, rgba(148,163,184,0.12) 0%, rgba(148,163,184,0.24) 50%, rgba(148,163,184,0.12) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+}
