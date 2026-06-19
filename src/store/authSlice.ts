@@ -41,7 +41,7 @@ export const login = createAsyncThunk<AuthResponse, LoginCredentials, { rejectVa
       return await authService.login(credentials);
     } catch (error: any) {
       if (!error.response) {
-        return rejectWithValue('Backend is not reachable at http://localhost:8080');
+        return rejectWithValue('Backend is not reachable. Check REACT_APP_API_URL for deployed environments.');
       }
 
       return rejectWithValue(error.response?.data?.message || 'Unable to sign in');
