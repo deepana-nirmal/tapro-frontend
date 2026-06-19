@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios';
-import { apiClient, publicApiClient } from './client';
+import { apiClient, baseURL, publicApiClient } from './client';
 import {
   AcceptInvitationRequest,
   ActivityItem,
@@ -46,7 +46,7 @@ import {
 import { buildSessionUser, normalizeRole, toBackendRole } from '../utils/auth';
 
 const demoMode = process.env.REACT_APP_DEMO_MODE === 'true';
-const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+const apiBaseUrl = baseURL;
 
 const backendOrigin = (() => {
   try {
