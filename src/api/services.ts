@@ -36,7 +36,6 @@ import {
   UsersByRestaurantGroup,
 } from '../types';
 import {
-  mockActivities,
   mockPlans,
   mockReportSeries,
   mockRestaurants,
@@ -44,6 +43,7 @@ import {
   mockSubscriptions,
 } from '../data/mock';
 import { buildSessionUser, normalizeRole, toBackendRole } from '../utils/auth';
+import { resolveApiErrorMessage } from '../utils/errors';
 
 const demoMode = process.env.REACT_APP_DEMO_MODE === 'true';
 const apiBaseUrl = baseURL;
@@ -448,8 +448,16 @@ export const superAdminRestaurantService = {
     const response = await apiClient.get<ApiEnvelope<Restaurant[]> | Restaurant[]>('/super-admin/restaurants');
     return unwrap(response.data).map(normalizeRestaurant);
   },
+  async create(payload: RestaurantFormValues) {
+    const response = await apiClient.post<ApiEnvelope<Restaurant> | Restaurant>('/super-admin/restaurants', payload);
+    return normalizeRestaurant(unwrap(response.data));
+  },
   async getById(restaurantId: number) {
     const response = await apiClient.get<ApiEnvelope<Restaurant> | Restaurant>(`/super-admin/restaurants/${restaurantId}`);
+    return normalizeRestaurant(unwrap(response.data));
+  },
+  async update(restaurantId: number, payload: RestaurantFormValues) {
+    const response = await apiClient.put<ApiEnvelope<Restaurant> | Restaurant>(`/super-admin/restaurants/${restaurantId}`, payload);
     return normalizeRestaurant(unwrap(response.data));
   },
   async uploadLogo(restaurantId: number, file: File) {
@@ -465,6 +473,18 @@ export const superAdminRestaurantService = {
   async activeOrders(restaurantId: number) {
     const response = await apiClient.get<ApiEnvelope<Order[]> | Order[]>(`/super-admin/restaurants/${restaurantId}/orders/active`);
     return unwrap(response.data);
+  },
+  async suspend(restaurantId: number) {
+    const response = await apiClient.patch<ApiEnvelope<Restaurant> | Restaurant>(`/super-admin/restaurants/${restaurantId}/suspend`);
+    return normalizeRestaurant(unwrap(response.data));
+  },
+  async activate(restaurantId: number) {
+    const response = await apiClient.patch<ApiEnvelope<Restaurant> | Restaurant>(`/super-admin/restaurants/${restaurantId}/activate`);
+    return normalizeRestaurant(unwrap(response.data));
+  },
+  async delete(restaurantId: number) {
+    await apiClient.delete(`/super-admin/restaurants/${restaurantId}`);
+    return true;
   },
   async pastOrders(
     restaurantId: number,
@@ -604,13 +624,12 @@ export const reportingService = {
 
 export const dashboardService = {
   async superAdminMetrics(): Promise<DashboardMetric[]> {
-    const [restaurants, orders] = await Promise.all([restaurantService.listAdmin(), orderService.list()]);
-    return [
-      { label: 'Total Restaurants', value: restaurants.length, helper: 'Active tenants across the platform', tone: 'blue' },
-      { label: 'Total Owners', value: restaurants.length, helper: 'Owner accounts currently assigned', tone: 'emerald' },
-      { label: 'Total Users', value: restaurants.length * 4, helper: 'Estimated active staff and owners', tone: 'amber' },
-      { label: 'Total Orders', value: orders.length, helper: 'Orders flowing through all restaurants', tone: 'rose' },
-    ];
+    try {
+      const response = await apiClient.get<ApiEnvelope<DashboardMetric[]> | DashboardMetric[]>('/super-admin/dashboard');
+      return unwrap(response.data);
+    } catch (error) {
+      throw new Error(resolveApiErrorMessage(error, 'Unable to load Super Admin dashboard. Please try again.'));
+    }
   },
   async ownerMetrics(): Promise<DashboardMetric[]> {
     const analytics = await ownerAnalyticsService.getAnalytics();
@@ -644,7 +663,14 @@ export const dashboardService = {
       { label: "Today's Revenue", value: `$${orders.reduce((sum, order) => sum + order.totalAmount, 0).toFixed(0)}`, helper: 'Settled and unsettled bill total', tone: 'emerald' },
     ];
   },
-  activities: async (): Promise<ActivityItem[]> => withFallback(apiClient.get<ActivityItem[]>('/activities/recent'), mockActivities),
+  activities: async (): Promise<ActivityItem[]> => {
+    try {
+      const response = await apiClient.get<ApiEnvelope<ActivityItem[]> | ActivityItem[]>('/super-admin/dashboard/activities');
+      return unwrap(response.data);
+    } catch (error) {
+      throw new Error(resolveApiErrorMessage(error, 'Unable to load Super Admin activity. Please try again.'));
+    }
+  },
 };
 
 export const superAdminUserService = {

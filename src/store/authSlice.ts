@@ -23,7 +23,10 @@ const getStoredState = (): Pick<AuthState, 'token' | 'user' | 'isAuthenticated'>
 
   return {
     token,
-    user: storedUser || buildSessionUser(token),
+    user: (() => {
+      const rebuilt = buildSessionUser(token, storedUser?.email, storedUser?.backendRole, storedUser?.restaurantId);
+      return storedUser ? { ...storedUser, ...rebuilt, name: storedUser.name || rebuilt.name } : rebuilt;
+    })(),
     isAuthenticated: true,
   };
 };

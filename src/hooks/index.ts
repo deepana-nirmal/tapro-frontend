@@ -2,6 +2,7 @@
 import { DependencyList, useEffect, useState } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../store';
+import { resolveApiErrorMessage } from '../utils/errors';
 
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
@@ -24,7 +25,7 @@ export const useAsyncResource = <T>(loader: () => Promise<T>, deps: DependencyLi
       })
       .catch((err: any) => {
         if (active) {
-          setError(err?.response?.data?.message || err.message || 'Something went wrong');
+          setError(resolveApiErrorMessage(err, 'Something went wrong. Please try again.'));
         }
       })
       .finally(() => {

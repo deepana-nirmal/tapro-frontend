@@ -84,10 +84,12 @@ const AppRoutes = () => {
         <Route element={<AppShell />}>
           <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']} />}>
             <Route path="/super-admin" element={<SuperAdminDashboardPage />} />
+            <Route path="/super-admin/dashboard" element={<SuperAdminDashboardPage />} />
             <Route path="/super-admin/restaurants" element={<RestaurantsManagementPage />} />
             <Route path="/super-admin/restaurants/:restaurantId" element={<SuperAdminRestaurantDetailPage />} />
             <Route path="/super-admin/users" element={<SuperAdminUsersManagementPage />} />
             <Route path="/super-admin/invitations" element={<InvitationManagementPage />} />
+            <Route path="/super-admin/landing-page" element={<SuperAdminDashboardPage />} />
             <Route path="/super-admin/subscriptions" element={<SubscriptionManagementPage />} />
             <Route path="/super-admin/reports" element={<PlatformReportsPage />} />
             <Route path="/super-admin/settings" element={<PlatformSettingsPage />} />

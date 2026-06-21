@@ -1,10 +1,11 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { invitationService, persistSession, restaurantService } from '../api/services';
+import { invitationService, persistSession, restaurantService, superAdminRestaurantService } from '../api/services';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { restoreSession } from '../store/authSlice';
 import { Button, Card, Input, LoadingBlock, PageHeader, Select } from '../components/ui';
+import { resolveApiErrorMessage } from '../utils/errors';
 import { invitationPathByBackendRole } from '../utils/auth';
 import { InvitationRole, InvitationVerifyResponse, Restaurant } from '../types';
 
@@ -63,7 +64,7 @@ export const AdminInvitationsPage = () => {
           setRestaurants([restaurant]);
           setRestaurantId(String(restaurant.id));
         } else {
-          const result = await restaurantService.list();
+          const result = await superAdminRestaurantService.list();
           if (!active) {
             return;
           }
@@ -73,7 +74,7 @@ export const AdminInvitationsPage = () => {
         }
       } catch (error: any) {
         if (active) {
-          setRestaurantError(error?.response?.data?.message || error?.message || 'Unable to load restaurants.');
+          setRestaurantError(resolveApiErrorMessage(error, 'Unable to load restaurants. Please try again.'));
         }
       } finally {
         if (active) {
@@ -137,7 +138,7 @@ export const AdminInvitationsPage = () => {
       setRole(defaultRole);
       toast.success('Invitation sent');
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Unable to send the invitation right now.';
+      const message = resolveApiErrorMessage(error, 'Unable to send the invitation right now.');
       setErrorMessage(message);
       toast.error(message);
     } finally {
@@ -269,7 +270,7 @@ export const AcceptInvitationPage = () => {
         }
       } catch (error: any) {
         if (active) {
-          setVerifyError(error?.response?.data?.message || 'Unable to verify this invitation.');
+          setVerifyError(resolveApiErrorMessage(error, 'Unable to verify this invitation.'));
           setVerification(null);
         }
       } finally {
@@ -324,7 +325,7 @@ export const AcceptInvitationPage = () => {
       toast.success('Account created successfully');
       navigate(invitationPathByBackendRole[auth.role || auth.user.backendRole], { replace: true });
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Unable to accept the invitation.';
+      const message = resolveApiErrorMessage(error, 'Unable to accept the invitation.');
       setSubmitError(message);
       toast.error(message);
     } finally {

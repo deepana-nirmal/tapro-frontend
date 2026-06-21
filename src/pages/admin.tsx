@@ -1,11 +1,12 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useParams } from 'react-router-dom';
-import { dashboardService, reportingService, restaurantService, subscriptionService, superAdminRestaurantService, superAdminUserService } from '../api/services';
+import { dashboardService, reportingService, subscriptionService, superAdminRestaurantService, superAdminUserService } from '../api/services';
 import { CategoryWorkspace } from '../components/category/CategoryWorkspace';
 import { ImageWithFallback, initialsFromName } from '../components/shared/ImageWithFallback';
 import { useAsyncResource } from '../hooks';
 import { Button, Card, DataTable, Input, LoadingBlock, OrderItemsList, PageHeader, Select, StatCard, StatusBadge, Textarea } from '../components/ui';
+import { resolveApiErrorMessage } from '../utils/errors';
 import { formatCurrency, formatDateTime } from '../utils/format';
 import { validateImageFile } from '../utils/upload';
 import { AdminInvitationsPage } from './invitations';
@@ -29,11 +30,20 @@ const emptyUserForm = (): SuperAdminUserRequest => ({
 });
 
 export const SuperAdminDashboardPage = () => {
-  const { data: metrics, loading } = useAsyncResource(() => dashboardService.superAdminMetrics(), []);
-  const { data: activities } = useAsyncResource(() => dashboardService.activities(), []);
+  const { data: metrics, loading, error } = useAsyncResource(() => dashboardService.superAdminMetrics(), []);
+  const { data: activities, error: activitiesError } = useAsyncResource(() => dashboardService.activities(), []);
 
-  if (loading || !metrics) {
-    return <div className="p-8">Loading dashboard...</div>;
+  if (loading) {
+    return <LoadingBlock label="Loading Super Admin dashboard..." />;
+  }
+
+  if (error || !metrics) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Super Admin Dashboard" description="Platform-wide revenue, tenant health, and recent activity." />
+        <Card><p className="text-sm text-rose-600">{error || 'Unable to load Super Admin data. Please try again.'}</p></Card>
+      </div>
+    );
   }
 
   return (
@@ -44,6 +54,7 @@ export const SuperAdminDashboardPage = () => {
       </div>
       <Card>
         <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Recent Activities</h2>
+        {activitiesError ? <p className="mt-4 text-sm text-slate-500 dark:text-slate-300">{activitiesError}</p> : null}
         <div className="mt-4 space-y-4">
           {(activities || []).map((activity) => (
             <div key={activity.id} className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
@@ -63,7 +74,7 @@ export const SuperAdminDashboardPage = () => {
 };
 
 export const RestaurantsManagementPage = () => {
-  const { data: restaurants, loading, setData } = useAsyncResource(() => restaurantService.listAdmin(), []);
+  const { data: restaurants, loading, setData } = useAsyncResource(() => superAdminRestaurantService.list(), []);
   const [form, setForm] = useState({
     name: '',
     address: '',
@@ -82,7 +93,7 @@ export const RestaurantsManagementPage = () => {
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
 
   const reloadRestaurants = async () => {
-    setData(await restaurantService.listAdmin());
+    setData(await superAdminRestaurantService.list());
   };
 
   const submit = async (event: FormEvent) => {
@@ -90,7 +101,7 @@ export const RestaurantsManagementPage = () => {
     setSubmitLoading(true);
     setSubmitError('');
     try {
-      await restaurantService.create(form);
+      await superAdminRestaurantService.create(form);
       await reloadRestaurants();
       setForm({
         name: '',
@@ -107,7 +118,7 @@ export const RestaurantsManagementPage = () => {
       });
       toast.success('Restaurant created successfully');
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Unable to create restaurant.';
+      const message = resolveApiErrorMessage(error, 'Unable to create restaurant. Please try again.');
       setSubmitError(message);
       toast.error(message);
     } finally {
@@ -182,15 +193,15 @@ export const RestaurantsManagementPage = () => {
                     setActionLoadingId(restaurant.id);
                     try {
                       if (restaurant.status === 'ACTIVE') {
-                        await restaurantService.suspend(restaurant.id);
+                        await superAdminRestaurantService.suspend(restaurant.id);
                         toast.success('Restaurant suspended successfully');
                       } else {
-                        await restaurantService.activate(restaurant.id);
+                        await superAdminRestaurantService.activate(restaurant.id);
                         toast.success('Restaurant activated successfully');
                       }
                       await reloadRestaurants();
                     } catch (error: any) {
-                      toast.error(error?.response?.data?.message || 'Unable to update restaurant status.');
+                      toast.error(resolveApiErrorMessage(error, 'Unable to update restaurant status. Please try again.'));
                     } finally {
                       setActionLoadingId(null);
                     }
@@ -204,11 +215,11 @@ export const RestaurantsManagementPage = () => {
                   onClick={async () => {
                     setActionLoadingId(restaurant.id);
                     try {
-                      await restaurantService.delete(restaurant.id);
+                      await superAdminRestaurantService.delete(restaurant.id);
                       await reloadRestaurants();
                       toast.success('Restaurant deleted successfully');
                     } catch (error: any) {
-                      toast.error(error?.response?.data?.message || 'Unable to delete restaurant.');
+                      toast.error(resolveApiErrorMessage(error, 'Unable to delete restaurant. Please try again.'));
                     } finally {
                       setActionLoadingId(null);
                     }
@@ -247,7 +258,7 @@ export const SuperAdminUsersManagementPage = () => {
 
     try {
       const [restaurantList, groupedUsers, allUsers] = await Promise.all([
-        restaurantService.listAdmin(),
+        superAdminRestaurantService.list(),
         superAdminUserService.listByRestaurant(),
         superAdminUserService.list(),
       ]);
@@ -255,7 +266,7 @@ export const SuperAdminUsersManagementPage = () => {
       setGroups(groupedUsers);
       setUsers(allUsers);
     } catch (error: any) {
-      setPageError(error?.response?.data?.message || 'Unable to load users.');
+      setPageError(resolveApiErrorMessage(error, 'Unable to load Super Admin users. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -341,7 +352,7 @@ export const SuperAdminUsersManagementPage = () => {
       setModalOpen(false);
       await reloadAll();
     } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message || 'Unable to save user.';
+      const message = resolveApiErrorMessage(error, 'Unable to save user. Please try again.');
       setModalError(message);
       toast.error(message);
     } finally {
@@ -361,7 +372,7 @@ export const SuperAdminUsersManagementPage = () => {
       }
       await reloadAll();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Unable to update user status.');
+      toast.error(resolveApiErrorMessage(error, 'Unable to update user status. Please try again.'));
     } finally {
       setActionLoadingId(null);
     }
@@ -378,7 +389,7 @@ export const SuperAdminUsersManagementPage = () => {
       toast.success('User deleted successfully');
       await reloadAll();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Unable to delete user.');
+      toast.error(resolveApiErrorMessage(error, 'Unable to delete user. Please try again.'));
     } finally {
       setActionLoadingId(null);
     }
@@ -952,7 +963,7 @@ export const SuperAdminRestaurantDetailPage = () => {
                     toast.success('Restaurant logo updated');
                   } catch (uploadError: any) {
                     setLogoPreviewUrl('');
-                    toast.error(uploadError?.response?.data?.message || uploadError?.message || 'Could not upload image. Please try another image under 5MB.');
+                    toast.error(resolveApiErrorMessage(uploadError, 'Could not upload image. Please try another image under 5MB.'));
                   } finally {
                     setLogoUploading(false);
                   }
