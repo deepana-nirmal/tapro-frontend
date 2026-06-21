@@ -245,6 +245,10 @@ export const categoryService = {
     const response = await apiClient.get<ApiEnvelope<Category[]> | Category[]>(`/categories/restaurant/${restaurantId}`);
     return unwrap(response.data).map(normalizeCategory);
   },
+  async listPublicByRestaurant(restaurantId: number) {
+    const response = await publicApiClient.get<ApiEnvelope<Category[]> | Category[]>(`/categories/public/restaurant/${restaurantId}`);
+    return unwrap(response.data).map(normalizeCategory);
+  },
   async getById(id: number) {
     const response = await apiClient.get<ApiEnvelope<Category> | Category>(`/categories/${id}`);
     return normalizeCategory(unwrap(response.data));
