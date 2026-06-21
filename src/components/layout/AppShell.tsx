@@ -1,6 +1,7 @@
 import { Bell, ChevronDown, LogOut, Menu, Store } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import TaproLogo from '../branding/TaproLogo';
 import { getNavigationForUser } from '../../config/navigation';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { logout } from '../../store/authSlice';
@@ -25,7 +26,7 @@ const AppShell = () => {
       <div className="mx-auto flex min-h-screen max-w-[1600px]">
         <aside className={`${mobileOpen ? 'fixed inset-y-0 left-0 z-40 flex w-80' : 'hidden'} flex-col border-r border-slate-200 bg-white/95 p-6 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 xl:static xl:flex xl:w-80`}>
           <div className="rounded-[24px] border border-emerald-100 bg-emerald-50 p-5 text-slate-950 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-white">
-            <p className="text-xs uppercase tracking-[0.3em] text-emerald-700 dark:text-emerald-300">Tapro Cloud</p>
+            <TaproLogo variant="mark" showTagline imageClassName="h-11 w-11" className="items-start" labelClassName="dark:text-white" />
             <h2 className="mt-3 text-2xl font-semibold">{user.name}</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{user.email}</p>
             <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{user.backendRole.replace('_', ' ')}</p>
@@ -65,7 +66,7 @@ const AppShell = () => {
                   <Menu className="h-4 w-4" />
                 </button>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-emerald-700 dark:text-emerald-300">Multi-Restaurant SaaS</p>
+                  <p className="text-xs uppercase tracking-[0.24em] text-emerald-700 dark:text-emerald-300">Tapro Operations</p>
                   <h1 className="text-lg font-semibold text-slate-950 dark:text-white">Operations Workspace</h1>
                 </div>
               </div>
