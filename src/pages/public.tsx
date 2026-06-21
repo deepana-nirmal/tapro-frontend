@@ -60,8 +60,8 @@ export const LandingPage = () => {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(6,78,85,0.12),transparent_28%),radial-gradient(circle_at_top_right,rgba(249,115,22,0.12),transparent_26%),linear-gradient(180deg,#fffefb_0%,#f6f7f3_100%)] px-4 py-4 text-slate-950">
       <div className="mx-auto max-w-[1560px] rounded-[40px] border border-white/70 bg-white/88 p-4 shadow-[0_45px_120px_rgba(15,23,42,0.12)] backdrop-blur md:p-6">
-        <header className="flex flex-col gap-5 rounded-[30px] border border-slate-200/80 bg-white px-5 py-4 md:flex-row md:items-center md:justify-between md:px-7">
-          <div className="logo-wrapper">
+        <header className="landing-navbar flex flex-col gap-5 rounded-[30px] border border-slate-200/80 bg-white md:flex-row md:items-center md:justify-between">
+          <div className="logo-wrapper landing-brand">
             <TaproLogo size="lg" />
           </div>
           <nav className="flex flex-wrap items-center gap-3 text-sm text-slate-600 md:gap-6">
@@ -86,7 +86,7 @@ export const LandingPage = () => {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(245,158,11,0.22),transparent_22%),radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_25%)]" />
             <div className="relative flex flex-col gap-10">
               <div className="flex flex-col gap-4 border-b border-white/12 pb-4 md:flex-row md:items-center md:justify-between">
-                <div className="logo-wrapper rounded-full border border-white/15 bg-white/92 px-4 py-2 shadow-lg shadow-slate-950/10">
+                <div className="logo-wrapper landing-logo rounded-full border border-white/15 bg-white/92 px-4 py-2 shadow-lg shadow-slate-950/10">
                   <TaproLogo size="md" />
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-white/84">

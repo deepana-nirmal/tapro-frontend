@@ -4,9 +4,9 @@ type TaproLogoProps = {
 };
 
 const sizeClassMap = {
-  sm: 'tapro-logo-sm',
-  md: 'tapro-logo-md',
-  lg: 'tapro-logo-lg',
+  sm: 'tapro-logo-sm h-10 w-auto max-w-[170px] object-contain',
+  md: 'tapro-logo-md h-11 md:h-16 w-auto max-w-[190px] md:max-w-[260px] object-contain',
+  lg: 'tapro-logo-lg h-[60px] md:h-24 w-auto max-w-[260px] md:max-w-[380px] object-contain',
 } as const;
 
 export function TaproLogo({ size = 'md', className = '' }: TaproLogoProps) {
