@@ -76,6 +76,16 @@
     min-height: 100vh;
   }
 
+  .logo-box,
+  .brand-logo,
+  .navbar-brand,
+  .logo-wrapper {
+    display: flex;
+    align-items: center;
+    width: auto;
+    overflow: visible;
+  }
+
   button,
   input,
   select,
