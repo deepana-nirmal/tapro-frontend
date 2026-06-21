@@ -156,6 +156,7 @@ export interface MenuItem {
   ingredients: string[];
   allergens: string[];
   categoryId: number;
+  categoryName?: string;
   restaurantId: number;
   restaurantName?: string;
 }

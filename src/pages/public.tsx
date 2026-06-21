@@ -2,11 +2,12 @@ import { ArrowRight, Check, QrCode, Sparkles, Star } from 'lucide-react';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { menuService, orderService, restaurantService, tableService } from '../api/services';
+import { categoryService, menuService, orderService, restaurantService, tableService } from '../api/services';
 import { ImageWithFallback, initialsFromName } from '../components/shared/ImageWithFallback';
 import { useAppDispatch, useAppSelector, useAsyncResource } from '../hooks';
 import { addToCart, clearCart, removeFromCart, updateQuantity } from '../store/cartSlice';
 import { Button, Card, EmptyState, Input, OrderItemsList, PageHeader, Select, StatusBadge } from '../components/ui';
+import { Category, MenuItem } from '../types';
 import { formatCurrency, formatDateTime } from '../utils/format';
 
 const heroImages = {
@@ -15,6 +16,33 @@ const heroImages = {
   dining: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=900&q=80',
   phone: 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80',
 };
+
+type CategoryOption = {
+  value: string;
+  label: string;
+  count: number;
+};
+
+const FALLBACK_CATEGORY_LABEL = 'Uncategorized';
+
+const toCategoryLookup = (categories?: Category[] | null) =>
+  new Map((categories || []).map((category) => [category.id, category.name]));
+
+const resolveCategoryLabel = (item: MenuItem, categoryLookup: Map<number, string>) => {
+  const directName = item.categoryName?.trim();
+  if (directName) {
+    return directName;
+  }
+
+  const mappedName = categoryLookup.get(item.categoryId)?.trim();
+  if (mappedName) {
+    return mappedName;
+  }
+
+  return FALLBACK_CATEGORY_LABEL;
+};
+
+const resolveCategoryValue = (item: MenuItem) => (item.categoryId ? String(item.categoryId) : 'uncategorized');
 
 export const LandingPage = () => (
   <div className="min-h-screen bg-light px-4 py-4 text-slate-950 dark:bg-dark dark:text-white">
@@ -202,17 +230,49 @@ export const RestaurantMenuPage = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const { data: restaurant } = useAsyncResource(() => restaurantService.getPublicById(Number(restaurantId)), [restaurantId]);
   const { data: items, loading } = useAsyncResource(() => menuService.listByRestaurant(Number(restaurantId)), [restaurantId]);
+  const { data: categories } = useAsyncResource(() => categoryService.listPublicByRestaurant(Number(restaurantId)), [restaurantId]);
   const { data: table } = useAsyncResource(() => tableService.getPublicTable(Number(restaurantId), Number(tableId)), [restaurantId, tableId]);
+  const categoryLookup = useMemo(() => toCategoryLookup(categories), [categories]);
+  const categoryOptions = useMemo<CategoryOption[]>(() => {
+    const options = new Map<string, CategoryOption>();
+
+    (items || []).forEach((item) => {
+      const value = resolveCategoryValue(item);
+      const label = resolveCategoryLabel(item, categoryLookup);
+      const existing = options.get(value);
+
+      if (existing) {
+        existing.count += 1;
+        if (existing.label === FALLBACK_CATEGORY_LABEL && label !== FALLBACK_CATEGORY_LABEL) {
+          existing.label = label;
+        }
+        return;
+      }
+
+      options.set(value, {
+        value,
+        label,
+        count: 1,
+      });
+    });
+
+    return Array.from(options.values()).sort((left, right) => left.label.localeCompare(right.label));
+  }, [categoryLookup, items]);
   const filteredItems = useMemo(() => {
     return (items || []).filter((item) => {
-      const matchesCategory = categoryFilter === 'all' || String(item.categoryId) === categoryFilter;
+      const matchesCategory = categoryFilter === 'all' || resolveCategoryValue(item) === categoryFilter;
       const matchesSearch = item.name.toLowerCase().includes(deferredSearch.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [items, categoryFilter, deferredSearch]);
-  const categoryIds = Array.from(new Set((items || []).map((item) => item.categoryId)));
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    if (categoryFilter !== 'all' && !categoryOptions.some((option) => option.value === categoryFilter)) {
+      setCategoryFilter('all');
+    }
+  }, [categoryFilter, categoryOptions]);
 
   useEffect(() => {
     if (!table) {
@@ -260,22 +320,44 @@ export const RestaurantMenuPage = () => {
           <Input label="Search food" placeholder="Search dishes..." value={search} onChange={(event) => setSearch(event.target.value)} />
           <Select label="Category" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
             <option value="all">All categories</option>
-            {Array.from(new Set((items || []).map((item) => item.categoryId))).map((id) => (
-              <option key={id} value={id}>{`Category ${id}`}</option>
+            {categoryOptions.map((category) => (
+              <option key={category.value} value={category.value}>{`${category.label} (${category.count})`}</option>
             ))}
           </Select>
         </div>
-        <div className="sticky top-0 z-20 mt-4 flex gap-2 overflow-x-auto rounded-2xl bg-white/80 px-2 py-2 shadow-sm backdrop-blur">
-          <button className={`rounded-full px-4 py-2 text-sm font-medium ${categoryFilter === 'all' ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-700'}`} onClick={() => setCategoryFilter('all')}>
-            All
-          </button>
-          {categoryIds.map((id) => (
-            <button key={id} className={`rounded-full px-4 py-2 text-sm font-medium ${categoryFilter === String(id) ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-700'}`} onClick={() => setCategoryFilter(String(id))}>
-              {`Category ${id}`}
+        <div className="sticky top-0 z-20 mt-4 overflow-hidden rounded-[28px] border border-amber-100 bg-white/90 shadow-sm backdrop-blur">
+          <div className="flex gap-3 overflow-x-auto px-3 py-3">
+            <button
+              className={`shrink-0 rounded-[22px] border px-4 py-3 text-left text-sm font-medium transition ${
+                categoryFilter === 'all'
+                  ? 'border-slate-950 bg-slate-950 text-white shadow-lg shadow-slate-950/15'
+                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-emerald-200 hover:bg-emerald-50'
+              }`}
+              onClick={() => setCategoryFilter('all')}
+            >
+              <span className="block">All</span>
+              <span className={`mt-1 block text-xs ${categoryFilter === 'all' ? 'text-slate-300' : 'text-slate-500'}`}>{items?.length || 0} dishes</span>
             </button>
-          ))}
+            {categoryOptions.map((category) => (
+              <button
+                key={category.value}
+                className={`shrink-0 rounded-[22px] border px-4 py-3 text-left text-sm font-medium transition ${
+                  categoryFilter === category.value
+                    ? 'border-emerald-600 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                    : 'border-slate-200 bg-[linear-gradient(135deg,#fffdf8,#fff5ea)] text-slate-700 hover:border-emerald-200 hover:bg-emerald-50'
+                }`}
+                onClick={() => setCategoryFilter(category.value)}
+              >
+                <span className="block">{category.label}</span>
+                <span className={`mt-1 block text-xs ${categoryFilter === category.value ? 'text-emerald-50/90' : 'text-slate-500'}`}>
+                  {category.count} dish{category.count === 1 ? '' : 'es'}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {filteredItems.length ? (
+          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {filteredItems.map((item) => (
             <Card key={item.id} className="rounded-[28px]">
               <ImageWithFallback
@@ -287,6 +369,9 @@ export const RestaurantMenuPage = () => {
               />
               <div className={`flex items-start justify-between gap-3 ${item.imageUrl ? 'mt-4' : ''}`}>
                 <div>
+                  <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-600">
+                    {resolveCategoryLabel(item, categoryLookup)}
+                  </div>
                   <h3 className="text-xl font-semibold text-slate-950 dark:text-white">{item.name}</h3>
                   <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{item.description}</p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -305,7 +390,17 @@ export const RestaurantMenuPage = () => {
               </div>
             </Card>
           ))}
-        </div>
+          </div>
+        ) : (
+          <div className="mt-8">
+            <EmptyState
+              title={categoryFilter === 'all' ? 'No dishes found.' : 'No dishes found in this category.'}
+              description={categoryFilter === 'all'
+                ? 'Try another search term or check back when the restaurant updates its menu.'
+                : 'Try another category or clear your search to see more menu items.'}
+            />
+          </div>
+        )}
       </div>
       {cartCount ? (
         <div className="fixed inset-x-4 bottom-4 z-30">
