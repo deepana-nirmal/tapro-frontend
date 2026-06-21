@@ -24,6 +24,7 @@ type CategoryOption = {
 };
 
 const FALLBACK_CATEGORY_LABEL = 'Uncategorized';
+const FALLBACK_RESTAURANT_NAME = 'Restaurant Menu';
 
 const toCategoryLookup = (categories?: Category[] | null) =>
   new Map((categories || []).map((category) => [category.id, category.name]));
@@ -43,6 +44,13 @@ const resolveCategoryLabel = (item: MenuItem, categoryLookup: Map<number, string
 };
 
 const resolveCategoryValue = (item: MenuItem) => (item.categoryId ? String(item.categoryId) : 'uncategorized');
+const resolveRestaurantName = (name?: string | null) => name?.trim() || FALLBACK_RESTAURANT_NAME;
+const resolveRestaurantDescription = (description?: string | null) =>
+  description?.trim() || 'Welcome. Browse the menu and order straight to your table.';
+const resolveTableLabel = (tableNumber?: string | null) => {
+  const normalized = tableNumber?.trim();
+  return normalized ? `Table ${normalized}` : 'Your table';
+};
 
 export const LandingPage = () => (
   <div className="min-h-screen bg-light px-4 py-4 text-slate-950 dark:bg-dark dark:text-white">
@@ -229,10 +237,14 @@ export const RestaurantMenuPage = () => {
   const deferredSearch = useDeferredValue(search);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const { data: restaurant } = useAsyncResource(() => restaurantService.getPublicById(Number(restaurantId)), [restaurantId]);
-  const { data: items, loading } = useAsyncResource(() => menuService.listByRestaurant(Number(restaurantId)), [restaurantId]);
+  const { data: items, loading } = useAsyncResource(() => menuService.listPublicByRestaurant(Number(restaurantId)), [restaurantId]);
   const { data: categories } = useAsyncResource(() => categoryService.listPublicByRestaurant(Number(restaurantId)), [restaurantId]);
   const { data: table } = useAsyncResource(() => tableService.getPublicTable(Number(restaurantId), Number(tableId)), [restaurantId, tableId]);
   const categoryLookup = useMemo(() => toCategoryLookup(categories), [categories]);
+  const restaurantName = resolveRestaurantName(restaurant?.name);
+  const restaurantDescription = resolveRestaurantDescription(restaurant?.description);
+  const tableLabel = resolveTableLabel(table?.tableNumber);
+  const restaurantMeta = [restaurant?.address?.trim(), restaurant?.phone?.trim()].filter(Boolean).join(' · ');
   const categoryOptions = useMemo<CategoryOption[]>(() => {
     const options = new Map<string, CategoryOption>();
 
@@ -261,10 +273,11 @@ export const RestaurantMenuPage = () => {
   const filteredItems = useMemo(() => {
     return (items || []).filter((item) => {
       const matchesCategory = categoryFilter === 'all' || resolveCategoryValue(item) === categoryFilter;
-      const matchesSearch = item.name.toLowerCase().includes(deferredSearch.toLowerCase());
+      const haystack = [item.name, item.description, resolveCategoryLabel(item, categoryLookup)].join(' ').toLowerCase();
+      const matchesSearch = haystack.includes(deferredSearch.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [items, categoryFilter, deferredSearch]);
+  }, [items, categoryFilter, deferredSearch, categoryLookup]);
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -287,110 +300,144 @@ export const RestaurantMenuPage = () => {
   }, [restaurantId, tableId, table]);
 
   if (loading) {
-    return <div className="p-8 text-center">Loading menu...</div>;
+    return <div className="p-8 text-center text-sm text-slate-600">Loading menu...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#fff8ef_0%,#fff4e6_35%,#fffaf4_100%)] px-4 py-6 text-slate-950">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#ffe7c2_0%,rgba(255,231,194,0.38)_18%,transparent_42%),linear-gradient(180deg,#fff6ea_0%,#fff0df_28%,#fffaf3_100%)] px-4 py-4 text-slate-950">
       <div className="mx-auto max-w-6xl pb-28">
-        <PageHeader
-          title={restaurant?.name || 'QR Menu'}
-          description={`${restaurant?.name || `Restaurant ${restaurantId}`} · Table ${table?.tableNumber || tableId}`}
-          action={<Link to="/checkout" className="rounded-2xl bg-slate-950 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-slate-950">Go to cart</Link>}
-        />
-        <Card className="mt-6 overflow-hidden bg-[radial-gradient(circle_at_top_left,#fde6c8,transparent_42%),linear-gradient(135deg,#fffdf8,#fff5ea)]">
-          <div className="flex items-center gap-4">
-            <ImageWithFallback
-              src={restaurant?.logoUrl}
-              alt={`${restaurant?.name || 'Restaurant'} logo`}
-              fallback={initialsFromName(restaurant?.name || 'Restaurant')}
-              className="h-16 w-16 rounded-2xl object-cover"
-              fallbackClassName="h-16 w-16 rounded-2xl text-xl"
+        <section className="relative overflow-hidden rounded-[34px] border border-amber-200/70 bg-[linear-gradient(135deg,rgba(255,251,245,0.96),rgba(255,243,224,0.92))] p-4 shadow-[0_24px_80px_rgba(148,82,24,0.12)] md:p-6">
+          <div className="absolute inset-x-0 top-0 h-32 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.28),transparent_55%)]" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="rounded-[28px] border border-white/80 bg-white/90 p-1 shadow-lg shadow-amber-950/5">
+                <ImageWithFallback
+                  src={restaurant?.logoUrl}
+                  alt={`${restaurantName} logo`}
+                  fallback={initialsFromName(restaurantName)}
+                  className="h-20 w-20 rounded-[22px] object-cover md:h-24 md:w-24"
+                  fallbackClassName="h-20 w-20 rounded-[22px] bg-[linear-gradient(135deg,#1f2937,#475569)] text-2xl md:h-24 md:w-24 md:text-3xl"
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-700">Tapro Table Ordering</p>
+                <h1 className="mt-2 truncate text-3xl font-semibold tracking-[-0.04em] text-slate-950 md:text-4xl">{restaurantName}</h1>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 md:text-base">{restaurantDescription}</p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white">
+                    {tableLabel}
+                  </span>
+                  {restaurantMeta ? (
+                    <span className="inline-flex rounded-full border border-amber-200 bg-white/80 px-4 py-2 text-xs font-medium text-slate-600">
+                      {restaurantMeta}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+            <Link to="/checkout" className="hidden shrink-0 rounded-full bg-slate-950 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-slate-950/15 md:inline-flex">
+              View Cart
+            </Link>
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-[30px] border border-amber-100 bg-white/80 p-4 shadow-sm backdrop-blur md:p-5">
+          <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
+            <Input
+              label="Search dishes"
+              placeholder="Search dishes, drinks, or categories..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
             />
-            <div>
-              <p className="text-lg font-semibold text-slate-950 dark:text-white">{restaurant?.name || `Restaurant ${restaurantId}`}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Welcome! Order freshly prepared food to your table.</p>
-              <p className="mt-2 inline-flex rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
-                {table ? `Table ${table.tableNumber}` : `Table ${tableId}`}
-              </p>
+            <Select label="Browse category" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+              <option value="all">All categories</option>
+              {categoryOptions.map((category) => (
+                <option key={category.value} value={category.value}>{`${category.label} (${category.count})`}</option>
+              ))}
+            </Select>
+          </div>
+          <div className="mt-4 overflow-hidden rounded-[28px] border border-amber-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(255,247,237,0.96))]">
+            <div className="flex gap-3 overflow-x-auto px-3 py-3">
+              <button
+                className={`shrink-0 rounded-[22px] border px-4 py-3 text-left text-sm font-medium transition ${
+                  categoryFilter === 'all'
+                    ? 'border-slate-950 bg-slate-950 text-white shadow-lg shadow-slate-950/15'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:bg-amber-50'
+                }`}
+                onClick={() => setCategoryFilter('all')}
+              >
+                <span className="block">All</span>
+                <span className={`mt-1 block text-xs ${categoryFilter === 'all' ? 'text-slate-300' : 'text-slate-500'}`}>{items?.length || 0} dishes</span>
+              </button>
+              {categoryOptions.map((category) => (
+                <button
+                  key={category.value}
+                  className={`shrink-0 rounded-[22px] border px-4 py-3 text-left text-sm font-medium transition ${
+                    categoryFilter === category.value
+                      ? 'border-emerald-600 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:bg-amber-50'
+                  }`}
+                  onClick={() => setCategoryFilter(category.value)}
+                >
+                  <span className="block">{category.label}</span>
+                  <span className={`mt-1 block text-xs ${categoryFilter === category.value ? 'text-emerald-50/90' : 'text-slate-500'}`}>
+                    {category.count} dish{category.count === 1 ? '' : 'es'}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
-        </Card>
-        <div className="mt-6 grid gap-4 md:grid-cols-[1fr_220px]">
-          <Input label="Search food" placeholder="Search dishes..." value={search} onChange={(event) => setSearch(event.target.value)} />
-          <Select label="Category" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
-            <option value="all">All categories</option>
-            {categoryOptions.map((category) => (
-              <option key={category.value} value={category.value}>{`${category.label} (${category.count})`}</option>
-            ))}
-          </Select>
-        </div>
-        <div className="sticky top-0 z-20 mt-4 overflow-hidden rounded-[28px] border border-amber-100 bg-white/90 shadow-sm backdrop-blur">
-          <div className="flex gap-3 overflow-x-auto px-3 py-3">
-            <button
-              className={`shrink-0 rounded-[22px] border px-4 py-3 text-left text-sm font-medium transition ${
-                categoryFilter === 'all'
-                  ? 'border-slate-950 bg-slate-950 text-white shadow-lg shadow-slate-950/15'
-                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-emerald-200 hover:bg-emerald-50'
-              }`}
-              onClick={() => setCategoryFilter('all')}
-            >
-              <span className="block">All</span>
-              <span className={`mt-1 block text-xs ${categoryFilter === 'all' ? 'text-slate-300' : 'text-slate-500'}`}>{items?.length || 0} dishes</span>
-            </button>
-            {categoryOptions.map((category) => (
-              <button
-                key={category.value}
-                className={`shrink-0 rounded-[22px] border px-4 py-3 text-left text-sm font-medium transition ${
-                  categoryFilter === category.value
-                    ? 'border-emerald-600 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                    : 'border-slate-200 bg-[linear-gradient(135deg,#fffdf8,#fff5ea)] text-slate-700 hover:border-emerald-200 hover:bg-emerald-50'
-                }`}
-                onClick={() => setCategoryFilter(category.value)}
-              >
-                <span className="block">{category.label}</span>
-                <span className={`mt-1 block text-xs ${categoryFilter === category.value ? 'text-emerald-50/90' : 'text-slate-500'}`}>
-                  {category.count} dish{category.count === 1 ? '' : 'es'}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
+        </section>
+
         {filteredItems.length ? (
-          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {filteredItems.map((item) => (
-            <Card key={item.id} className="rounded-[28px]">
-              <ImageWithFallback
-                src={item.imageUrl}
-                alt={item.name}
-                fallback={initialsFromName(item.name)}
-                className="h-48 w-full rounded-2xl object-cover"
-                fallbackClassName="h-48 w-full rounded-2xl bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100 text-3xl text-slate-700"
-              />
-              <div className={`flex items-start justify-between gap-3 ${item.imageUrl ? 'mt-4' : ''}`}>
-                <div>
-                  <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-600">
-                    {resolveCategoryLabel(item, categoryLookup)}
-                  </div>
-                  <h3 className="text-xl font-semibold text-slate-950 dark:text-white">{item.name}</h3>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{item.description}</p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-                    {item.featured && item.featuredLabel ? <span className="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-800">{featuredBadgeLabels[item.featuredLabel]}</span> : null}
-                    {item.preparationTime ? <span>{`${item.preparationTime} min`}</span> : null}
-                    {item.allergens.length ? <span>{`Allergens: ${item.allergens.join(', ')}`}</span> : null}
-                  </div>
+          <section className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {filteredItems.map((item) => (
+              <Card key={item.id} className="rounded-[30px] border-amber-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,249,240,0.98))] p-4">
+                <div className="overflow-hidden rounded-[24px]">
+                  <ImageWithFallback
+                    src={item.imageUrl}
+                    alt={item.name}
+                    fallback={initialsFromName(item.name)}
+                    className="h-52 w-full rounded-[24px] object-cover transition duration-500 hover:scale-[1.03]"
+                    fallbackClassName="h-52 w-full rounded-[24px] bg-[linear-gradient(135deg,#fde6c8,#ffd8b4,#ffc6a5)] text-4xl text-slate-700"
+                  />
                 </div>
-                <StatusBadge value={item.status} />
-              </div>
-              <div className="mt-6 flex items-center justify-between">
-                <span className="text-lg font-semibold text-slate-950 dark:text-white">{formatCurrency(item.price)}</span>
-                <Button disabled={item.status !== 'AVAILABLE'} onClick={() => { dispatch(addToCart({ menuItemId: item.id, name: item.name, price: item.price })); toast.success(`${item.name} added to cart`); }}>
-                  {item.status === 'OUT_OF_STOCK' ? 'Out of Stock' : 'Add item'}
-                </Button>
-              </div>
-            </Card>
-          ))}
-          </div>
+                <div className={`flex items-start justify-between gap-3 ${item.imageUrl ? 'mt-4' : ''}`}>
+                  <div className="min-w-0">
+                    <div className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 shadow-sm">
+                      {resolveCategoryLabel(item, categoryLookup)}
+                    </div>
+                    <h3 className="mt-3 text-xl font-semibold text-slate-950">{item.name}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+                      {item.featured && item.featuredLabel ? <span className="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-800">{featuredBadgeLabels[item.featuredLabel]}</span> : null}
+                      {item.preparationTime ? <span>{`${item.preparationTime} min`}</span> : null}
+                      {item.allergens.length ? <span>{`Allergens: ${item.allergens.join(', ')}`}</span> : null}
+                    </div>
+                  </div>
+                  <StatusBadge value={item.status === 'AVAILABLE' ? 'AVAILABLE' : 'UNAVAILABLE'} />
+                </div>
+                <div className="mt-6 flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-lg font-semibold text-slate-950">{formatCurrency(item.price)}</span>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {item.status === 'AVAILABLE' ? 'Available now' : 'Currently unavailable'}
+                    </p>
+                  </div>
+                  <Button
+                    disabled={item.status !== 'AVAILABLE'}
+                    className="min-w-[112px]"
+                    onClick={() => {
+                      dispatch(addToCart({ menuItemId: item.id, name: item.name, price: item.price }));
+                      toast.success(`${item.name} added to cart`);
+                    }}
+                  >
+                    {item.status === 'AVAILABLE' ? 'Add item' : 'Unavailable'}
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </section>
         ) : (
           <div className="mt-8">
             <EmptyState
@@ -404,7 +451,7 @@ export const RestaurantMenuPage = () => {
       </div>
       {cartCount ? (
         <div className="fixed inset-x-4 bottom-4 z-30">
-          <Link to="/checkout" className="flex items-center justify-between rounded-3xl bg-slate-950 px-5 py-4 text-white shadow-2xl">
+          <Link to="/checkout" className="flex items-center justify-between rounded-3xl bg-slate-950 px-5 py-4 text-white shadow-2xl shadow-slate-950/20">
             <div>
               <p className="text-sm font-semibold">{cartCount} item{cartCount > 1 ? 's' : ''} in cart</p>
               <p className="text-xs text-slate-300">Ready to place your order</p>
