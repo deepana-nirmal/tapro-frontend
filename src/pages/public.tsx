@@ -62,7 +62,7 @@ export const LandingPage = () => {
       <div className="mx-auto max-w-[1560px] rounded-[40px] border border-white/70 bg-white/88 p-4 shadow-[0_45px_120px_rgba(15,23,42,0.12)] backdrop-blur md:p-6">
         <header className="landing-navbar flex flex-col gap-5 rounded-[30px] border border-slate-200/80 bg-white md:flex-row md:items-center md:justify-between">
           <div className="logo-wrapper landing-brand">
-            <TaproLogo size="lg" />
+            <TaproLogo size="md" />
           </div>
           <nav className="flex flex-wrap items-center gap-3 text-sm text-slate-600 md:gap-6">
             <a href="#how-it-works" className="transition hover:text-slate-950">How It Works</a>
@@ -87,7 +87,7 @@ export const LandingPage = () => {
             <div className="relative flex flex-col gap-10">
               <div className="flex flex-col gap-4 border-b border-white/12 pb-4 md:flex-row md:items-center md:justify-between">
                 <div className="logo-wrapper landing-logo rounded-full border border-white/15 bg-white/92 px-4 py-2 shadow-lg shadow-slate-950/10">
-                  <TaproLogo size="md" />
+                  <TaproLogo size="lg" />
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-white/84">
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 backdrop-blur">
