@@ -300,6 +300,10 @@ export const menuService = {
     const response = await apiClient.get<ApiEnvelope<MenuItem[]> | MenuItem[]>(`/menu-items/restaurant/${restaurantId}`);
     return unwrap(response.data).map(normalizeMenuItem);
   },
+  async listPublicByRestaurant(restaurantId: number) {
+    const response = await publicApiClient.get<ApiEnvelope<MenuItem[]> | MenuItem[]>(`/menu-items/restaurant/${restaurantId}`);
+    return unwrap(response.data).map(normalizeMenuItem);
+  },
   async listByRestaurantForManagement(restaurantId: number) {
     const response = await apiClient.get<ApiEnvelope<MenuItem[]> | MenuItem[]>(`/menu-items/restaurant/${restaurantId}/manage`);
     return unwrap(response.data).map(normalizeMenuItem);
@@ -358,7 +362,7 @@ export const tableService = {
     return true;
   },
   async getPublicTable(restaurantId: number, tableId: number) {
-    const response = await apiClient.get<ApiEnvelope<RestaurantTable> | RestaurantTable>(`/tables/public/restaurant/${restaurantId}/table/${tableId}`);
+    const response = await publicApiClient.get<ApiEnvelope<RestaurantTable> | RestaurantTable>(`/tables/public/restaurant/${restaurantId}/table/${tableId}`);
     return normalizeTable(unwrap(response.data));
   },
 };
