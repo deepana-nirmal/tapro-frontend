@@ -17,8 +17,8 @@ const authWrapper = (title: string, description: string, children: ReactNode) =>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.18),_transparent_32%),radial-gradient(circle_at_bottom_left,_rgba(244,196,48,0.16),_transparent_28%)]" />
         <div className="relative flex h-full flex-col justify-between gap-8">
           <div>
-            <div className="inline-flex items-center rounded-[24px] border border-white/15 bg-white/92 px-4 py-3 shadow-lg shadow-black/10">
-              <TaproLogo variant="mark" showTagline imageClassName="h-11 w-11" labelClassName="text-slate-950" />
+            <div className="logo-wrapper rounded-[24px] border border-white/15 bg-white/92 px-4 py-3 shadow-lg shadow-black/10">
+              <TaproLogo />
             </div>
             <div className="mt-3 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-emerald-50/85 backdrop-blur">
               Restaurant OS

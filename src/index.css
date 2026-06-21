@@ -76,11 +76,56 @@
     min-height: 100vh;
   }
 
+  .tapro-logo {
+    display: block;
+    height: 44px;
+    width: auto;
+    max-width: 220px;
+    object-fit: contain;
+    object-position: center;
+    flex-shrink: 0;
+  }
+
+  .tapro-logo-large {
+    display: block;
+    height: 72px;
+    width: auto;
+    max-width: 340px;
+    object-fit: contain;
+    object-position: center;
+    flex-shrink: 0;
+  }
+
+  .logo-box,
+  .brand-logo,
+  .navbar-brand,
+  .logo-wrapper {
+    display: flex;
+    align-items: center;
+    width: auto;
+    min-width: fit-content;
+    overflow: visible;
+  }
+
   button,
   input,
   select,
   textarea {
     font: inherit;
+  }
+}
+
+@media (max-width: 768px) {
+  @layer base {
+    .tapro-logo {
+      height: 34px;
+      max-width: 170px;
+    }
+
+    .tapro-logo-large {
+      height: 52px;
+      max-width: 240px;
+    }
   }
 }
 

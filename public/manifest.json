@@ -3,9 +3,9 @@
   "name": "Tapro Restaurant QR Ordering Platform",
   "icons": [
     {
-      "src": "assets/tapro-logo-mark.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "assets/tapro-logo.png",
+      "sizes": "2000x2000",
+      "type": "image/png"
     }
   ],
   "start_url": ".",
