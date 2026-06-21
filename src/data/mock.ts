@@ -25,9 +25,9 @@ export const mockCategories: Category[] = [
 ];
 
 export const mockMenuItems: MenuItem[] = [
-  { id: 1, name: 'Seared Salmon Bowl', description: 'Brown rice, citrus greens, sesame dressing', price: 18, status: 'AVAILABLE', featured: true, featuredLabel: 'CHEF_RECOMMENDED', preparationTime: 18, imageUrl: '', ingredients: ['Salmon', 'Brown rice', 'Citrus greens'], allergens: ['Fish', 'Sesame'], categoryId: 2, restaurantId: 1, restaurantName: 'Harbor Table' },
-  { id: 2, name: 'Truffle Fries', description: 'Parmesan, rosemary salt', price: 9, status: 'AVAILABLE', featured: false, featuredLabel: null, preparationTime: 10, imageUrl: '', ingredients: ['Potato', 'Parmesan', 'Truffle oil'], allergens: ['Dairy'], categoryId: 1, restaurantId: 1, restaurantName: 'Harbor Table' },
-  { id: 3, name: 'Chocolate Basque Cheesecake', description: 'Burnt top, vanilla cream', price: 11, status: 'OUT_OF_STOCK', featured: false, featuredLabel: null, preparationTime: 5, imageUrl: '', ingredients: ['Cream cheese', 'Chocolate', 'Eggs'], allergens: ['Dairy', 'Egg'], categoryId: 3, restaurantId: 1, restaurantName: 'Harbor Table' },
+  { id: 1, name: 'Seared Salmon Bowl', description: 'Brown rice, citrus greens, sesame dressing', price: 18, status: 'AVAILABLE', featured: true, featuredLabel: 'CHEF_RECOMMENDED', preparationTime: 18, imageUrl: '', ingredients: ['Salmon', 'Brown rice', 'Citrus greens'], allergens: ['Fish', 'Sesame'], categoryId: 2, categoryName: 'Rice Bowls', restaurantId: 1, restaurantName: 'Harbor Table' },
+  { id: 2, name: 'Truffle Fries', description: 'Parmesan, rosemary salt', price: 9, status: 'AVAILABLE', featured: false, featuredLabel: null, preparationTime: 10, imageUrl: '', ingredients: ['Potato', 'Parmesan', 'Truffle oil'], allergens: ['Dairy'], categoryId: 1, categoryName: 'Starters', restaurantId: 1, restaurantName: 'Harbor Table' },
+  { id: 3, name: 'Chocolate Basque Cheesecake', description: 'Burnt top, vanilla cream', price: 11, status: 'OUT_OF_STOCK', featured: false, featuredLabel: null, preparationTime: 5, imageUrl: '', ingredients: ['Cream cheese', 'Chocolate', 'Eggs'], allergens: ['Dairy', 'Egg'], categoryId: 3, categoryName: 'Desserts', restaurantId: 1, restaurantName: 'Harbor Table' },
 ];
 
 export const mockTables: RestaurantTable[] = [
