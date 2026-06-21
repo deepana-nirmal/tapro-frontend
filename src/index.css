@@ -85,6 +85,36 @@
 }
 
 @layer utilities {
+  .tapro-logo {
+    height: 44px;
+    width: auto;
+    max-width: min(100%, 280px);
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .tapro-logo-large {
+    height: 72px;
+    width: auto;
+    max-width: min(100%, 460px);
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    .tapro-logo {
+      height: 36px;
+      max-width: min(100%, 220px);
+    }
+
+    .tapro-logo-large {
+      height: 56px;
+      max-width: min(100%, 320px);
+    }
+  }
+
   .font-editorial {
     font-family: 'Cormorant Garamond', serif;
   }

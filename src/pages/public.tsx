@@ -61,7 +61,7 @@ export const LandingPage = () => {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(6,78,85,0.12),transparent_28%),radial-gradient(circle_at_top_right,rgba(249,115,22,0.12),transparent_26%),linear-gradient(180deg,#fffefb_0%,#f6f7f3_100%)] px-4 py-4 text-slate-950">
       <div className="mx-auto max-w-[1560px] rounded-[40px] border border-white/70 bg-white/88 p-4 shadow-[0_45px_120px_rgba(15,23,42,0.12)] backdrop-blur md:p-6">
         <header className="flex flex-col gap-5 rounded-[30px] border border-slate-200/80 bg-white px-5 py-4 md:flex-row md:items-center md:justify-between md:px-7">
-          <TaproLogo imageClassName="h-12 md:h-14" />
+          <TaproLogo className="max-w-full" imageClassName="tapro-logo" />
           <nav className="flex flex-wrap items-center gap-3 text-sm text-slate-600 md:gap-6">
             <a href="#how-it-works" className="transition hover:text-slate-950">How It Works</a>
             <a href="#features" className="transition hover:text-slate-950">Features</a>
@@ -84,8 +84,8 @@ export const LandingPage = () => {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(245,158,11,0.22),transparent_22%),radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_25%)]" />
             <div className="relative flex flex-col gap-10">
               <div className="flex flex-col gap-4 border-b border-white/12 pb-4 md:flex-row md:items-center md:justify-between">
-                <div className="rounded-full border border-white/15 bg-white/92 px-4 py-2 shadow-lg shadow-slate-950/10">
-                  <TaproLogo imageClassName="h-10 md:h-11" />
+                <div className="max-w-full rounded-[24px] border border-white/15 bg-white/92 px-4 py-3 shadow-lg shadow-slate-950/10">
+                  <TaproLogo className="max-w-full" imageClassName="tapro-logo-large max-w-full" size="large" />
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-white/84">
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 backdrop-blur">
@@ -403,7 +403,7 @@ export const LandingPage = () => {
         <footer className="mt-4 rounded-[30px] border border-slate-200 bg-white px-5 py-6 md:px-7">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <TaproLogo imageClassName="h-11 md:h-12" />
+              <TaproLogo className="max-w-full" imageClassName="tapro-logo" />
               <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
                 Premium QR ordering and restaurant operations software for modern service teams.
               </p>
@@ -517,10 +517,7 @@ export const RestaurantMenuPage = () => {
                 />
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-3">
-                  <TaproLogo variant="mark" withWordmark={false} imageClassName="h-10 w-10 rounded-2xl" />
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-700">Tapro Table Ordering</p>
-                </div>
+                <TaproLogo className="max-w-full" imageClassName="h-9 md:h-10 max-w-[220px] w-auto object-contain" />
                 <h1 className="mt-2 truncate text-3xl font-semibold tracking-[-0.04em] text-slate-950 md:text-4xl">{restaurantName}</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 md:text-base">{restaurantDescription}</p>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
