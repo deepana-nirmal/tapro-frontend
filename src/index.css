@@ -76,11 +76,43 @@
     min-height: 100vh;
   }
 
+  .tapro-logo,
+  .tapro-logo-large {
+    width: auto;
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .tapro-logo {
+    height: 44px;
+    max-width: 190px;
+  }
+
+  .tapro-logo-large {
+    height: 72px;
+    max-width: 280px;
+  }
+
   button,
   input,
   select,
   textarea {
     font: inherit;
+  }
+}
+
+@media (max-width: 768px) {
+  @layer base {
+    .tapro-logo {
+      height: 34px;
+      max-width: 150px;
+    }
+
+    .tapro-logo-large {
+      height: 56px;
+      max-width: 220px;
+    }
   }
 }
 
