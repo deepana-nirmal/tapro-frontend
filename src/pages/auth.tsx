@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-route
 import toast from 'react-hot-toast';
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
 import { authService, invitationService } from '../api/services';
+import TaproLogo from '../components/branding/TaproLogo';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { clearError, login } from '../store/authSlice';
 import { Button, Card, Input, PageHeader, Select } from '../components/ui';
@@ -16,12 +17,11 @@ const authWrapper = (title: string, description: string, children: ReactNode) =>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.18),_transparent_32%),radial-gradient(circle_at_bottom_left,_rgba(244,196,48,0.16),_transparent_28%)]" />
         <div className="relative flex h-full flex-col justify-between gap-8">
           <div>
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-300 text-sm font-semibold text-[#123629]">T</span>
-              <div>
-                <p className="text-xs uppercase tracking-[0.32em] text-emerald-100/80">Tapro</p>
-                <p className="text-sm text-emerald-50/85">Restaurant OS</p>
-              </div>
+            <div className="inline-flex items-center rounded-[24px] border border-white/15 bg-white/92 px-4 py-3 shadow-lg shadow-black/10">
+              <TaproLogo variant="mark" showTagline imageClassName="h-11 w-11" labelClassName="text-slate-950" />
+            </div>
+            <div className="mt-3 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-emerald-50/85 backdrop-blur">
+              Restaurant OS
             </div>
             <h1 className="mt-8 max-w-xl text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">{title}</h1>
             <p className="mt-4 max-w-xl text-sm leading-7 text-emerald-50/78 sm:text-base">{description}</p>
@@ -70,6 +70,7 @@ const PasswordField = ({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
+          autoComplete="current-password"
           className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3 pr-14 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:shadow-[0_0_0_4px_rgba(16,185,129,0.08)]"
           required
         />
@@ -138,6 +139,7 @@ export const LoginPage = () => {
             <input
               type="email"
               value={form.email}
+              autoComplete="email"
               onChange={(event) => {
                 if (error) {
                   dispatch(clearError());
@@ -197,8 +199,8 @@ export const RegisterPage = () => {
     <Card className="p-8">
       <PageHeader title="Create account" description="Customers can register directly. Staff accounts should come through invitations." />
       <form className="mt-8 space-y-4" onSubmit={onSubmit}>
-        <Input label="Email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
-        <Input label="Password" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
+        <Input label="Email" type="email" autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+        <Input label="Password" type="password" autoComplete="current-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
         <Select label="Role" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as UserRole })}>
           <option value="CUSTOMER">Customer</option>
         </Select>
@@ -223,7 +225,7 @@ export const ForgotPasswordPage = () => {
           toast.success('Reset instructions sent');
         }}
       >
-        <Input label="Email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+        <Input label="Email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
         <Button type="submit" className="w-full">Send reset link</Button>
       </form>
     </Card>
@@ -246,7 +248,7 @@ export const ResetPasswordPage = () => {
           toast.success('Password reset complete');
         }}
       >
-        <Input label="New password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+        <Input label="New password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
         <Button type="submit" className="w-full">Reset password</Button>
       </form>
     </Card>
@@ -268,8 +270,8 @@ export const ChangePasswordPage = () => {
           toast.success('Password updated');
         }}
       >
-        <Input label="Current password" type="password" value={form.currentPassword} onChange={(event) => setForm({ ...form, currentPassword: event.target.value })} required />
-        <Input label="New password" type="password" value={form.newPassword} onChange={(event) => setForm({ ...form, newPassword: event.target.value })} required />
+        <Input label="Current password" type="password" autoComplete="current-password" value={form.currentPassword} onChange={(event) => setForm({ ...form, currentPassword: event.target.value })} required />
+        <Input label="New password" type="password" autoComplete="new-password" value={form.newPassword} onChange={(event) => setForm({ ...form, newPassword: event.target.value })} required />
         <Button type="submit" className="w-full">Change password</Button>
       </form>
     </Card>
@@ -294,7 +296,7 @@ export const AcceptInvitationPage = () => {
           toast.success('Invitation accepted');
         }}
       >
-        <Input label="Create password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+        <Input label="Create password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
         <Button type="submit" className="w-full">Activate account</Button>
       </form>
     </Card>
