@@ -1,7 +1,7 @@
 import React, { PropsWithChildren, ReactNode } from 'react';
 import { Loader2, Moon, Sun } from 'lucide-react';
 import { formatCompactNumber, formatCurrency } from '../../utils/format';
-import { OrderItem } from '../../types';
+import { CurrencyCode, OrderItem } from '../../types';
 
 export const classNames = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(' ');
 
@@ -217,9 +217,11 @@ export const DataTable = <T,>({
 
 export const OrderItemsList = ({
   items,
+  currencyCode = 'LKR',
   emptyLabel = 'No items available',
 }: {
   items?: Array<Pick<OrderItem, 'id' | 'itemName' | 'quantity' | 'price' | 'subTotal'>>;
+  currencyCode?: CurrencyCode;
   emptyLabel?: string;
 }) => {
   if (!items?.length) {
@@ -231,7 +233,7 @@ export const OrderItemsList = ({
       {items.map((item, index) => (
         <div key={item.id ?? `${item.itemName}-${index}`} className="text-sm text-slate-700 dark:text-slate-200">
           <span className="font-medium">{item.quantity} x {item.itemName}</span>
-          <span className="text-slate-500 dark:text-slate-400"> - {formatCurrency(typeof item.subTotal === 'number' ? item.subTotal : item.price)}</span>
+          <span className="text-slate-500 dark:text-slate-400"> - {formatCurrency(typeof item.subTotal === 'number' ? item.subTotal : item.price, currencyCode)}</span>
         </div>
       ))}
     </div>

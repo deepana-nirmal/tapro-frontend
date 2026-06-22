@@ -13,9 +13,9 @@ import {
 } from '../types';
 
 export const mockRestaurants: Restaurant[] = [
-  { id: 1, name: 'Harbor Table', address: '120 Ocean Ave', phone: '+1 555 410 9001', email: 'hello@harbortable.com', logoUrl: '', description: 'Coastal dining and QR ordering.', openingHours: 'Mon-Sun: 11:00 - 23:00', serviceChargePercentage: 10, taxPercentage: 8, currency: 'USD', themeColor: '#10b981', status: 'ACTIVE', planName: 'Growth', createdAt: '2026-06-01T09:00:00Z' },
-  { id: 2, name: 'Cedar Spoon', address: '44 Market Street', phone: '+1 555 410 9002', email: 'ops@cedarspoon.com', logoUrl: '', description: 'Seasonal menu and neighborhood hospitality.', openingHours: 'Tue-Sun: 12:00 - 22:00', serviceChargePercentage: 12, taxPercentage: 8, currency: 'USD', themeColor: '#f59e0b', status: 'ACTIVE', planName: 'Scale', createdAt: '2026-05-12T09:00:00Z' },
-  { id: 3, name: 'Saffron Yard', address: '88 Highline Blvd', phone: '+1 555 410 9003', email: 'owner@saffronyard.com', logoUrl: '', description: 'Modern South Asian dining.', openingHours: 'Mon-Sat: 17:00 - 23:30', serviceChargePercentage: 10, taxPercentage: 7.5, currency: 'USD', themeColor: '#ef4444', status: 'SUSPENDED', planName: 'Starter', createdAt: '2026-04-09T09:00:00Z' },
+  { id: 1, name: 'Harbor Table', address: '120 Ocean Ave', phone: '+1 555 410 9001', email: 'hello@harbortable.com', logoUrl: '', description: 'Coastal dining and QR ordering.', openingHours: 'Mon-Sun: 11:00 - 23:00', serviceChargePercentage: 10, taxPercentage: 8, currencyCode: 'LKR', themeColor: '#10b981', status: 'ACTIVE', planName: 'Growth', createdAt: '2026-06-01T09:00:00Z' },
+  { id: 2, name: 'Cedar Spoon', address: '44 Market Street', phone: '+1 555 410 9002', email: 'ops@cedarspoon.com', logoUrl: '', description: 'Seasonal menu and neighborhood hospitality.', openingHours: 'Tue-Sun: 12:00 - 22:00', serviceChargePercentage: 12, taxPercentage: 8, currencyCode: 'USD', themeColor: '#f59e0b', status: 'ACTIVE', planName: 'Scale', createdAt: '2026-05-12T09:00:00Z' },
+  { id: 3, name: 'Saffron Yard', address: '88 Highline Blvd', phone: '+1 555 410 9003', email: 'owner@saffronyard.com', logoUrl: '', description: 'Modern South Asian dining.', openingHours: 'Mon-Sat: 17:00 - 23:30', serviceChargePercentage: 10, taxPercentage: 7.5, currencyCode: 'LKR', themeColor: '#ef4444', status: 'SUSPENDED', planName: 'Starter', createdAt: '2026-04-09T09:00:00Z' },
 ];
 
 export const mockCategories: Category[] = [

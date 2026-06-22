@@ -34,6 +34,7 @@ import {
   TableFormValues,
   UserRole,
   UsersByRestaurantGroup,
+  CurrencyCode,
 } from '../types';
 import {
   mockPlans,
@@ -103,9 +104,13 @@ const resolveFrontendUrl = (value?: string | null) => {
   return `${window.location.origin}${value.startsWith('/') ? value : `/${value}`}`;
 };
 
+const resolveCurrencyCode = (value?: string | null): CurrencyCode =>
+  value === 'USD' ? 'USD' : 'LKR';
+
 const normalizeMenuItem = (item: MenuItem): MenuItem => ({
   ...item,
   imageUrl: item.imageUrl ? resolveBackendUrl(item.imageUrl) : item.imageUrl,
+  restaurantCurrencyCode: resolveCurrencyCode(item.restaurantCurrencyCode),
 });
 
 const normalizeTable = (table: RestaurantTable): RestaurantTable => ({
@@ -122,6 +127,12 @@ const normalizeCategory = (category: Category): Category => ({
 const normalizeRestaurant = (restaurant: Restaurant): Restaurant => ({
   ...restaurant,
   logoUrl: restaurant.logoUrl ? resolveBackendUrl(restaurant.logoUrl) : restaurant.logoUrl,
+  currencyCode: resolveCurrencyCode(restaurant.currencyCode || restaurant.currency),
+});
+
+const normalizeOrder = (order: Order): Order => ({
+  ...order,
+  restaurantCurrencyCode: resolveCurrencyCode(order.restaurantCurrencyCode),
 });
 
 export const persistSession = (token: string, user: SessionUser) => {
@@ -369,15 +380,15 @@ export const tableService = {
 export const orderService = {
   async list() {
     const response = await apiClient.get<ApiEnvelope<Order[]> | Order[]>('/orders');
-    return unwrap(response.data);
+    return unwrap(response.data).map(normalizeOrder);
   },
   async listByStatus(status: OrderStatus) {
     const response = await apiClient.get<ApiEnvelope<Order[]> | Order[]>(`/orders/status/${status}`);
-    return unwrap(response.data);
+    return unwrap(response.data).map(normalizeOrder);
   },
   async listByTable(tableNumber: string) {
     const response = await apiClient.get<ApiEnvelope<Order[]> | Order[]>(`/orders/table/${tableNumber}`);
-    return unwrap(response.data);
+    return unwrap(response.data).map(normalizeOrder);
   },
   async create(payload: CreateOrderPayload) {
     const response = await publicApiClient.post<ApiEnvelope<Order> | Order>('/orders', payload, {
@@ -385,25 +396,25 @@ export const orderService = {
         'X-Tenant-ID': String(payload.restaurantId),
       },
     });
-    return unwrap(response.data);
+    return normalizeOrder(unwrap(response.data));
   },
   async updateStatus(id: number, status: OrderStatus) {
     const response = await apiClient.put<ApiEnvelope<Order> | Order>(`/orders/${id}/status?newStatus=${status}`);
-    return unwrap(response.data);
+    return normalizeOrder(unwrap(response.data));
   },
   async ownerUpdateStatus(id: number, status: OrderStatus) {
     const response = await apiClient.put<ApiEnvelope<Order> | Order>(`/owner/orders/${id}/status?status=${status}`);
-    return unwrap(response.data);
+    return normalizeOrder(unwrap(response.data));
   },
   async ownerOrders(restaurantId: number, status?: OrderStatus) {
     const response = await apiClient.get<Order[]>(
       status ? `/owner/orders/${restaurantId}/status?status=${status}` : `/owner/orders/${restaurantId}`
     );
-    return response.data;
+    return response.data.map(normalizeOrder);
   },
   async ownerActiveOrders() {
     const response = await apiClient.get<ApiEnvelope<Order[]> | Order[]>('/owner/orders/active');
-    return unwrap(response.data);
+    return unwrap(response.data).map(normalizeOrder);
   },
   async ownerPastOrders(filters: { from?: string; to?: string; status?: Extract<OrderStatus, 'COMPLETED' | 'CANCELLED'>; tableNumber?: string }) {
     const params = new URLSearchParams();
@@ -421,24 +432,24 @@ export const orderService = {
     }
 
     const response = await apiClient.get<ApiEnvelope<Order[]> | Order[]>(`/owner/orders/past${params.toString() ? `?${params}` : ''}`);
-    return unwrap(response.data);
+    return unwrap(response.data).map(normalizeOrder);
   },
   async kitchenOrders() {
     const response = await apiClient.get<ApiEnvelope<Order[]> | Order[]>('/kitchen/orders');
-    return unwrap(response.data);
+    return unwrap(response.data).map(normalizeOrder);
   },
   async kitchenPastOrders() {
     const response = await apiClient.get<ApiEnvelope<Order[]> | Order[]>('/kitchen/orders/past');
-    return unwrap(response.data);
+    return unwrap(response.data).map(normalizeOrder);
   },
   async kitchenUpdateStatus(id: number, status: OrderStatus) {
     const response = await apiClient.put<ApiEnvelope<Order> | Order>(`/kitchen/orders/${id}/status?status=${status}`);
-    return unwrap(response.data);
+    return normalizeOrder(unwrap(response.data));
   },
   async getPublicById(id: number, restaurantId?: number) {
     const url = restaurantId ? `/orders/public/${id}?restaurantId=${restaurantId}` : `/orders/public/${id}`;
     const response = await publicApiClient.get<ApiEnvelope<Order> | Order>(url);
-    return unwrap(response.data);
+    return normalizeOrder(unwrap(response.data));
   },
 };
 
@@ -463,7 +474,7 @@ export const superAdminRestaurantService = {
   },
   async activeOrders(restaurantId: number) {
     const response = await apiClient.get<ApiEnvelope<Order[]> | Order[]>(`/super-admin/restaurants/${restaurantId}/orders/active`);
-    return unwrap(response.data);
+    return unwrap(response.data).map(normalizeOrder);
   },
   async pastOrders(
     restaurantId: number,
@@ -486,7 +497,7 @@ export const superAdminRestaurantService = {
     const response = await apiClient.get<ApiEnvelope<Order[]> | Order[]>(
       `/super-admin/restaurants/${restaurantId}/orders/past${params.toString() ? `?${params}` : ''}`
     );
-    return unwrap(response.data);
+    return unwrap(response.data).map(normalizeOrder);
   },
   async users(restaurantId: number) {
     const response = await apiClient.get<ApiEnvelope<StaffMember[]> | StaffMember[]>(`/super-admin/restaurants/${restaurantId}/users`);

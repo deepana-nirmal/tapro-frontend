@@ -35,7 +35,7 @@ export const CustomerOrdersPage = () => {
             { key: 'id', label: 'Order', render: (row) => `#${row.id}` },
             { key: 'table', label: 'Table', render: (row) => row.tableNumber },
             { key: 'status', label: 'Status', render: (row) => row.status },
-            { key: 'amount', label: 'Amount', render: (row) => formatCurrency(row.totalAmount) },
+            { key: 'amount', label: 'Amount', render: (row) => formatCurrency(row.totalAmount, row.restaurantCurrencyCode || 'LKR') },
             { key: 'time', label: 'Placed', render: (row) => formatDateTime(row.orderTime) },
           ]}
           rows={orders || []}

@@ -9,7 +9,7 @@ import { Button, Card, DataTable, Input, LoadingBlock, OrderItemsList, PageHeade
 import { formatCurrency, formatDateTime } from '../utils/format';
 import { validateImageFile } from '../utils/upload';
 import { AdminInvitationsPage } from './invitations';
-import { BackendRole, Restaurant, SuperAdminUser, SuperAdminUserRequest, UsersByRestaurantGroup } from '../types';
+import { BackendRole, CurrencyCode, Restaurant, RestaurantFormValues, SuperAdminUser, SuperAdminUserRequest, UsersByRestaurantGroup } from '../types';
 
 const manageableRoles: Array<{ value: Extract<BackendRole, 'OWNER' | 'STAFF' | 'KITCHEN'>; label: string }> = [
   { value: 'OWNER', label: 'Owner' },
@@ -27,6 +27,11 @@ const emptyUserForm = (): SuperAdminUserRequest => ({
   password: '',
   enabled: true,
 });
+
+const currencyOptions: Array<{ value: CurrencyCode; label: string }> = [
+  { value: 'LKR', label: 'LKR - Sri Lankan Rupee' },
+  { value: 'USD', label: 'USD - US Dollar' },
+];
 
 export const SuperAdminDashboardPage = () => {
   const { data: metrics, loading, error } = useAsyncResource(() => dashboardService.superAdminMetrics(), []);
@@ -87,7 +92,7 @@ export const SuperAdminDashboardPage = () => {
 
 export const RestaurantsManagementPage = () => {
   const { data: restaurants, loading, error, setData } = useAsyncResource(() => restaurantService.listAdmin(), []);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<RestaurantFormValues>({
     name: '',
     address: '',
     phone: '',
@@ -97,7 +102,7 @@ export const RestaurantsManagementPage = () => {
     openingHours: '',
     serviceChargePercentage: 0,
     taxPercentage: 0,
-    currency: 'USD',
+    currencyCode: 'LKR',
     themeColor: '#10b981',
   });
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -125,7 +130,7 @@ export const RestaurantsManagementPage = () => {
         openingHours: '',
         serviceChargePercentage: 0,
         taxPercentage: 0,
-        currency: 'USD',
+        currencyCode: 'LKR',
         themeColor: '#10b981',
       });
       toast.success('Restaurant created successfully');
@@ -165,6 +170,9 @@ export const RestaurantsManagementPage = () => {
             <Textarea label="Address" value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} required />
             <Input label="Phone" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} required />
             <Input label="Email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+            <Select label="Currency" value={form.currencyCode} onChange={(event) => setForm({ ...form, currencyCode: event.target.value as CurrencyCode })}>
+              {currencyOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </Select>
             {submitError ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{submitError}</p> : null}
             <Button type="submit" disabled={submitLoading}>{submitLoading ? 'Creating...' : 'Create restaurant'}</Button>
           </form>
@@ -204,7 +212,7 @@ export const RestaurantsManagementPage = () => {
                 <div className="rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Today Revenue</p>
                   <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                    {typeof restaurant.todayRevenue === 'number' ? formatCurrency(restaurant.todayRevenue) : 'N/A'}
+                    {typeof restaurant.todayRevenue === 'number' ? formatCurrency(restaurant.todayRevenue, restaurant.currencyCode || 'LKR') : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -739,6 +747,9 @@ export const SuperAdminRestaurantDetailPage = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState('');
+  const [settingsForm, setSettingsForm] = useState<RestaurantFormValues | null>(null);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
 
   const getRange = () => {
     const now = new Date();
@@ -788,6 +799,26 @@ export const SuperAdminRestaurantDetailPage = () => {
   const { data: tables } = useAsyncResource(() => superAdminRestaurantService.tables(numericRestaurantId), [numericRestaurantId, refreshKey]);
   const { data: users } = useAsyncResource(() => superAdminRestaurantService.users(numericRestaurantId), [numericRestaurantId, refreshKey]);
   const { data: analytics } = useAsyncResource(() => superAdminRestaurantService.analytics(numericRestaurantId), [numericRestaurantId, refreshKey]);
+
+  useEffect(() => {
+    if (!restaurant) {
+      return;
+    }
+
+    setSettingsForm({
+      name: restaurant.name,
+      address: restaurant.address,
+      phone: restaurant.phone,
+      email: restaurant.email,
+      logoUrl: restaurant.logoUrl || '',
+      description: restaurant.description || '',
+      openingHours: restaurant.openingHours || '',
+      serviceChargePercentage: restaurant.serviceChargePercentage ?? 0,
+      taxPercentage: restaurant.taxPercentage ?? 0,
+      currencyCode: restaurant.currencyCode || 'LKR',
+      themeColor: restaurant.themeColor || '#10b981',
+    });
+  }, [restaurant]);
 
   if (restaurantLoading || !restaurant) {
     return <LoadingBlock label="Loading restaurant workspace..." />;
@@ -840,7 +871,7 @@ export const SuperAdminRestaurantDetailPage = () => {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-800">
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Today Revenue</p>
-                  <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{typeof restaurant.todayRevenue === 'number' ? formatCurrency(restaurant.todayRevenue) : 'N/A'}</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{typeof restaurant.todayRevenue === 'number' ? formatCurrency(restaurant.todayRevenue, restaurant.currencyCode || 'LKR') : 'N/A'}</p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-800">
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Active Order Count</p>
@@ -858,8 +889,8 @@ export const SuperAdminRestaurantDetailPage = () => {
               { key: 'id', label: 'Order', render: (row) => `#${row.id}` },
               { key: 'table', label: 'Table', render: (row) => row.tableNumber },
               { key: 'status', label: 'Status', render: (row) => <StatusBadge value={row.status} /> },
-              { key: 'items', label: 'Items', render: (row) => <OrderItemsList items={row.items} emptyLabel="Could not load orders." /> },
-              { key: 'total', label: 'Total', render: (row) => formatCurrency(row.totalAmount) },
+              { key: 'items', label: 'Items', render: (row) => <OrderItemsList items={row.items} currencyCode={row.restaurantCurrencyCode || restaurant.currencyCode || 'LKR'} emptyLabel="Could not load orders." /> },
+              { key: 'total', label: 'Total', render: (row) => formatCurrency(row.totalAmount, row.restaurantCurrencyCode || restaurant.currencyCode || 'LKR') },
               { key: 'time', label: 'Placed', render: (row) => formatDateTime(row.orderTime) },
             ]}
             rows={activeOrders || []}
@@ -893,8 +924,8 @@ export const SuperAdminRestaurantDetailPage = () => {
                 { key: 'id', label: 'Order', render: (row) => `#${row.id}` },
                 { key: 'table', label: 'Table', render: (row) => row.tableNumber },
                 { key: 'status', label: 'Status', render: (row) => <StatusBadge value={row.status} /> },
-                { key: 'items', label: 'Items', render: (row) => <OrderItemsList items={row.items} emptyLabel="Could not load orders." /> },
-                { key: 'total', label: 'Total', render: (row) => formatCurrency(row.totalAmount) },
+                { key: 'items', label: 'Items', render: (row) => <OrderItemsList items={row.items} currencyCode={row.restaurantCurrencyCode || restaurant.currencyCode || 'LKR'} emptyLabel="Could not load orders." /> },
+                { key: 'total', label: 'Total', render: (row) => formatCurrency(row.totalAmount, row.restaurantCurrencyCode || restaurant.currencyCode || 'LKR') },
                 { key: 'time', label: 'Placed', render: (row) => formatDateTime(row.orderTime) },
               ]}
               rows={pastOrders || []}
@@ -907,7 +938,7 @@ export const SuperAdminRestaurantDetailPage = () => {
           <DataTable
             columns={[
               { key: 'name', label: 'Item', render: (row) => row.name },
-              { key: 'price', label: 'Price', render: (row) => formatCurrency(row.price) },
+              { key: 'price', label: 'Price', render: (row) => formatCurrency(row.price, row.restaurantCurrencyCode || restaurant.currencyCode || 'LKR') },
               { key: 'status', label: 'Status', render: (row) => <StatusBadge value={row.status} /> },
             ]}
             rows={menuItems || []}
@@ -995,32 +1026,52 @@ export const SuperAdminRestaurantDetailPage = () => {
               />
             </label>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <p className="text-sm text-slate-500">Email</p>
-              <p className="font-semibold text-slate-950 dark:text-white">{restaurant.email}</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Phone</p>
-              <p className="font-semibold text-slate-950 dark:text-white">{restaurant.phone}</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Address</p>
-              <p className="font-semibold text-slate-950 dark:text-white">{restaurant.address}</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Status</p>
-              <p className="font-semibold text-slate-950 dark:text-white">{restaurant.status || 'ACTIVE'}</p>
-            </div>
-          </div>
+          {settingsForm ? (
+            <form
+              className="grid gap-4 md:grid-cols-2"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                setSettingsSaving(true);
+                setSettingsError('');
+                try {
+                  await restaurantService.update(numericRestaurantId, settingsForm);
+                  setRefreshKey((value) => value + 1);
+                  toast.success('Restaurant settings updated');
+                } catch (submitError: any) {
+                  const message = submitError?.response?.data?.message || submitError?.message || 'Unable to update restaurant settings.';
+                  setSettingsError(message);
+                  toast.error(message);
+                } finally {
+                  setSettingsSaving(false);
+                }
+              }}
+            >
+              <Input label="Restaurant Name" value={settingsForm.name} onChange={(event) => setSettingsForm({ ...settingsForm, name: event.target.value })} required />
+              <Input label="Support Email" type="email" value={settingsForm.email} onChange={(event) => setSettingsForm({ ...settingsForm, email: event.target.value })} required />
+              <Input label="Phone" value={settingsForm.phone} onChange={(event) => setSettingsForm({ ...settingsForm, phone: event.target.value })} required />
+              <Select label="Currency" value={settingsForm.currencyCode} onChange={(event) => setSettingsForm({ ...settingsForm, currencyCode: event.target.value as CurrencyCode })}>
+                {currencyOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </Select>
+              <Textarea label="Address" value={settingsForm.address} onChange={(event) => setSettingsForm({ ...settingsForm, address: event.target.value })} required />
+              <Textarea label="Description" value={settingsForm.description} onChange={(event) => setSettingsForm({ ...settingsForm, description: event.target.value })} />
+              <Textarea label="Opening Hours" value={settingsForm.openingHours} onChange={(event) => setSettingsForm({ ...settingsForm, openingHours: event.target.value })} />
+              <Input label="Theme Color" value={settingsForm.themeColor} onChange={(event) => setSettingsForm({ ...settingsForm, themeColor: event.target.value })} required />
+              <Input label="Service Charge (%)" type="number" min="0" max="100" step="0.01" value={settingsForm.serviceChargePercentage} onChange={(event) => setSettingsForm({ ...settingsForm, serviceChargePercentage: Number(event.target.value) })} required />
+              <Input label="Tax (%)" type="number" min="0" max="100" step="0.01" value={settingsForm.taxPercentage} onChange={(event) => setSettingsForm({ ...settingsForm, taxPercentage: Number(event.target.value) })} required />
+              {settingsError ? <p className="md:col-span-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{settingsError}</p> : null}
+              <div className="md:col-span-2">
+                <Button type="submit" disabled={settingsSaving}>{settingsSaving ? 'Saving...' : 'Save settings'}</Button>
+              </div>
+            </form>
+          ) : null}
         </Card>
       ) : null}
       {tab === 'ANALYTICS' && analytics ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Revenue Today" value={formatCurrency(analytics.revenue.today)} helper="Completed and ready orders today" tone="emerald" />
-          <StatCard label="Revenue Week" value={formatCurrency(analytics.revenue.week)} helper="Current week revenue" tone="blue" />
-          <StatCard label="Revenue Month" value={formatCurrency(analytics.revenue.month)} helper="Current month revenue" tone="amber" />
-          <StatCard label="Average Order" value={formatCurrency(analytics.averageOrderValue)} helper="Average completed/ready order" tone="rose" />
+          <StatCard label="Revenue Today" value={formatCurrency(analytics.revenue.today, restaurant.currencyCode || 'LKR')} helper="Completed and ready orders today" tone="emerald" />
+          <StatCard label="Revenue Week" value={formatCurrency(analytics.revenue.week, restaurant.currencyCode || 'LKR')} helper="Current week revenue" tone="blue" />
+          <StatCard label="Revenue Month" value={formatCurrency(analytics.revenue.month, restaurant.currencyCode || 'LKR')} helper="Current month revenue" tone="amber" />
+          <StatCard label="Average Order" value={formatCurrency(analytics.averageOrderValue, restaurant.currencyCode || 'LKR')} helper="Average completed/ready order" tone="rose" />
         </div>
       ) : null}
     </div>

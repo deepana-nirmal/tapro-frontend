@@ -58,11 +58,13 @@ const toMenuPayload = (restaurantId: number, categoryId: number, values: MenuIte
 export const CategoryWorkspace = ({
   restaurantId,
   mode,
+  currencyCode = 'LKR',
   title,
   description,
 }: {
   restaurantId: number;
   mode: WorkspaceMode;
+  currencyCode?: 'LKR' | 'USD';
   title?: string;
   description?: string;
 }) => {
@@ -539,7 +541,7 @@ export const CategoryWorkspace = ({
                     <div>
                       <h4 className="text-lg font-semibold text-slate-950 dark:text-white">{item.name}</h4>
                       <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{item.description}</p>
-                      <p className="mt-2 text-base font-semibold text-slate-950 dark:text-white">{formatCurrency(item.price)}</p>
+                      <p className="mt-2 text-base font-semibold text-slate-950 dark:text-white">{formatCurrency(item.price, item.restaurantCurrencyCode || currencyCode)}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <StatusBadge value={item.status} />
                         <StatusBadge value={item.featured ? item.featuredLabel || 'FEATURED' : 'STANDARD'} />
