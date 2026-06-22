@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from '../hooks';
 import { restoreSession } from '../store/authSlice';
 import { Button, Card, Input, LoadingBlock, PageHeader, Select } from '../components/ui';
 import { invitationPathByBackendRole } from '../utils/auth';
-import { InvitationRole, InvitationVerifyResponse, Restaurant } from '../types';
+import { Invitation, InvitationRole, InvitationVerifyResponse, Restaurant } from '../types';
 
 const invitationRoles: Record<'SUPER_ADMIN' | 'OWNER', Array<{ value: InvitationRole; label: string }>> = {
   SUPER_ADMIN: [
@@ -41,6 +41,10 @@ export const AdminInvitationsPage = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [invitationsLoading, setInvitationsLoading] = useState(false);
+  const [invitationError, setInvitationError] = useState('');
+  const isSuperAdmin = user?.backendRole === 'SUPER_ADMIN';
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -63,7 +67,7 @@ export const AdminInvitationsPage = () => {
           setRestaurants([restaurant]);
           setRestaurantId(String(restaurant.id));
         } else {
-          const result = await restaurantService.list();
+          const result = await (isSuperAdmin ? restaurantService.listAdmin() : restaurantService.list());
           if (!active) {
             return;
           }
@@ -87,7 +91,41 @@ export const AdminInvitationsPage = () => {
     return () => {
       active = false;
     };
-  }, [isOwner, user?.restaurantId]);
+  }, [isOwner, isSuperAdmin, user?.restaurantId]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) {
+      setInvitations([]);
+      setInvitationError('');
+      setInvitationsLoading(false);
+      return;
+    }
+
+    let active = true;
+    setInvitationsLoading(true);
+    setInvitationError('');
+
+    invitationService.listSuperAdmin()
+      .then((result) => {
+        if (active) {
+          setInvitations(result);
+        }
+      })
+      .catch((error: any) => {
+        if (active) {
+          setInvitationError(error?.response?.data?.message || error?.message || 'Unable to load invitations.');
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setInvitationsLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isSuperAdmin]);
 
   useEffect(() => {
     setRole(defaultRole);
@@ -131,10 +169,17 @@ export const AdminInvitationsPage = () => {
     setErrorMessage('');
 
     try {
-      await invitationService.sendInvitation(email.trim(), role, Number(restaurantId));
+      if (isSuperAdmin) {
+        await invitationService.sendSuperAdminInvitation(email.trim(), role, Number(restaurantId));
+      } else {
+        await invitationService.sendInvitation(email.trim(), role, Number(restaurantId));
+      }
       setSuccessMessage(`Invitation sent to ${email.trim()}.`);
       setEmail('');
       setRole(defaultRole);
+      if (isSuperAdmin) {
+        setInvitations(await invitationService.listSuperAdmin());
+      }
       toast.success('Invitation sent');
     } catch (error: any) {
       const message = error?.response?.data?.message || 'Unable to send the invitation right now.';
@@ -223,6 +268,45 @@ export const AdminInvitationsPage = () => {
           </Button>
         </form>
       </Card>
+      {isSuperAdmin ? (
+        <Card>
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Recent Invitations</h2>
+            {invitationsLoading ? <span className="text-sm text-slate-400">Refreshing...</span> : null}
+          </div>
+          {invitationError ? <p className="mt-4 text-sm text-rose-600">{invitationError}</p> : null}
+          {!invitationError && !invitationsLoading && !invitations.length ? (
+            <p className="mt-4 text-sm text-slate-500 dark:text-slate-300">No invitations sent yet.</p>
+          ) : null}
+          <div className="mt-4 space-y-3">
+            {invitations.map((invitation) => (
+              <div key={invitation.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="font-semibold text-slate-950 dark:text-white">{invitation.email}</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
+                    {roleLabel(invitation.role)}{invitation.restaurantName ? ` · ${invitation.restaurantName}` : ''}
+                  </p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">{invitation.status}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={async () => {
+                    try {
+                      await invitationService.deleteSuperAdmin(invitation.id);
+                      setInvitations((current) => current.filter((item) => item.id !== invitation.id));
+                      toast.success('Invitation removed');
+                    } catch (error: any) {
+                      toast.error(error?.response?.data?.message || 'Unable to remove invitation.');
+                    }
+                  }}
+                >
+                  Remove
+                </Button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
     </div>
   );
 };

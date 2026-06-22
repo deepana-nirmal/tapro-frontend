@@ -78,9 +78,9 @@ export const mockActivities: ActivityItem[] = [
 export const mockInvitations: Invitation[] = [
   {
     id: 'inv-1',
-    name: 'Lena Ortiz',
     email: 'lena@cedarspoon.com',
-    role: 'RESTAURANT_OWNER',
+    role: 'OWNER',
+    restaurantId: 2,
     restaurantName: 'Cedar Spoon',
     status: 'PENDING',
     invitationLink: 'https://tapro.app/invite/accept?token=inv-1',

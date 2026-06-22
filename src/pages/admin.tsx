@@ -29,11 +29,29 @@ const emptyUserForm = (): SuperAdminUserRequest => ({
 });
 
 export const SuperAdminDashboardPage = () => {
-  const { data: metrics, loading } = useAsyncResource(() => dashboardService.superAdminMetrics(), []);
-  const { data: activities } = useAsyncResource(() => dashboardService.activities(), []);
+  const { data: metrics, loading, error } = useAsyncResource(() => dashboardService.superAdminMetrics(), []);
+  const { data: activities, loading: activitiesLoading, error: activitiesError } = useAsyncResource(() => dashboardService.activities(), []);
 
-  if (loading || !metrics) {
+  if (loading) {
     return <div className="p-8">Loading dashboard...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Super Admin Dashboard" description="Platform-wide revenue, tenant health, and recent activity." />
+        <Card><p className="text-sm text-rose-600">{error || 'Unable to load dashboard. Please try again.'}</p></Card>
+      </div>
+    );
+  }
+
+  if (!metrics?.length) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Super Admin Dashboard" description="Platform-wide revenue, tenant health, and recent activity." />
+        <Card><p className="text-sm text-slate-500 dark:text-slate-300">No dashboard metrics available yet.</p></Card>
+      </div>
+    );
   }
 
   return (
@@ -44,6 +62,11 @@ export const SuperAdminDashboardPage = () => {
       </div>
       <Card>
         <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Recent Activities</h2>
+        {activitiesLoading ? <LoadingBlock label="Loading recent activities..." /> : null}
+        {!activitiesLoading && activitiesError ? <p className="mt-4 text-sm text-rose-600">{activitiesError}</p> : null}
+        {!activitiesLoading && !activitiesError && !(activities || []).length ? (
+          <p className="mt-4 text-sm text-slate-500 dark:text-slate-300">No recent activity found.</p>
+        ) : null}
         <div className="mt-4 space-y-4">
           {(activities || []).map((activity) => (
             <div key={activity.id} className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
@@ -63,7 +86,7 @@ export const SuperAdminDashboardPage = () => {
 };
 
 export const RestaurantsManagementPage = () => {
-  const { data: restaurants, loading, setData } = useAsyncResource(() => restaurantService.listAdmin(), []);
+  const { data: restaurants, loading, error, setData } = useAsyncResource(() => restaurantService.listAdmin(), []);
   const [form, setForm] = useState({
     name: '',
     address: '',
@@ -115,13 +138,25 @@ export const RestaurantsManagementPage = () => {
     }
   };
 
-  if (loading || !restaurants) {
+  if (loading) {
     return <div className="p-8">Loading restaurants...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Restaurants" description="Create restaurants, review tenant health, and open a restaurant-specific workspace." />
+        <Card><p className="text-sm text-rose-600">{error || 'Unable to load restaurants. Please try again.'}</p></Card>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <PageHeader title="Restaurants" description="Create restaurants, review tenant health, and open a restaurant-specific workspace." />
+      {!restaurants?.length ? (
+        <Card><p className="text-sm text-slate-500 dark:text-slate-300">No restaurants found. Create your first restaurant.</p></Card>
+      ) : null}
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <Card>
           <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Create Restaurant</h2>
@@ -135,7 +170,7 @@ export const RestaurantsManagementPage = () => {
           </form>
         </Card>
         <div className="grid gap-4 md:grid-cols-2">
-          {restaurants.map((restaurant) => (
+          {(restaurants || []).map((restaurant) => (
             <Card key={restaurant.id} className="rounded-[28px]">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
