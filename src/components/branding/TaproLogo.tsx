@@ -1,6 +1,8 @@
+import { SyntheticEvent } from 'react';
 import { classNames } from '../ui';
 
 type TaproLogoProps = {
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
   imageClassName?: string;
   labelClassName?: string;
@@ -10,41 +12,45 @@ type TaproLogoProps = {
   alt?: string;
 };
 
-const fullLogoSrc = '/assets/tapro-logo-full.svg';
-const markLogoSrc = '/assets/tapro-logo-mark.svg';
+const primaryLogoSrc = '/assets/tapro-logo.svg';
+const fallbackLogoSrc = '/assets/tapro-logo.jpg';
+const sizeClassMap = {
+  sm: 'tapro-logo-sm',
+  md: 'tapro-logo-md',
+  lg: 'tapro-logo-lg',
+} as const;
+
+const handleLogoError = (event: SyntheticEvent<HTMLImageElement>) => {
+  const image = event.currentTarget;
+  if (image.src.endsWith(fallbackLogoSrc)) {
+    return;
+  }
+
+  image.src = fallbackLogoSrc;
+};
 
 const TaproLogo = ({
+  size = 'md',
   className,
   imageClassName,
-  labelClassName,
+  labelClassName: _labelClassName,
   variant = 'full',
   withWordmark = true,
   showTagline = false,
   alt = 'Tapro logo',
 }: TaproLogoProps) => {
-  if (variant === 'mark') {
-    return (
-      <div className={classNames('inline-flex items-center gap-3', className)}>
-        <img src={markLogoSrc} alt={alt} className={classNames('h-12 w-12 object-contain', imageClassName)} />
-        {withWordmark ? (
-          <div className={labelClassName}>
-            <p className="text-xl font-semibold tracking-[-0.04em] text-slate-950">Tapro</p>
-            {showTagline ? <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Restaurant Command Platform</p> : null}
-          </div>
-        ) : null}
-      </div>
-    );
-  }
+  void _labelClassName;
+  void variant;
+  void withWordmark;
+  void showTagline;
 
   return (
-    <div className={classNames('inline-flex items-center', className)}>
-      <img src={fullLogoSrc} alt={alt} className={classNames('h-16 w-auto object-contain', imageClassName)} />
-      {showTagline ? (
-        <p className={classNames('ml-4 text-[11px] uppercase tracking-[0.28em] text-slate-500', labelClassName)}>
-          Restaurant Command Platform
-        </p>
-      ) : null}
-    </div>
+    <img
+      src={primaryLogoSrc}
+      alt={alt}
+      className={classNames('tapro-logo', sizeClassMap[size], imageClassName, className)}
+      onError={handleLogoError}
+    />
   );
 };
 

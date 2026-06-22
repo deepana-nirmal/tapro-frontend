@@ -76,6 +76,151 @@
     min-height: 100vh;
   }
 
+  .tapro-logo {
+    display: block;
+    width: auto;
+    object-fit: contain;
+    object-position: center;
+    flex-shrink: 0;
+  }
+
+  .tapro-logo-sm {
+    height: 56px;
+    max-width: 260px;
+  }
+
+  .tapro-logo-md {
+    height: 90px;
+    max-width: 420px;
+  }
+
+  .tapro-logo-lg {
+    height: 140px;
+    max-width: 620px;
+  }
+
+  .tapro-logo-navbar {
+    height: 86px;
+    max-width: 420px;
+  }
+
+  .tapro-logo-hero {
+    height: 112px;
+    max-width: 520px;
+  }
+
+  .logo-box,
+  .brand-logo,
+  .navbar-brand,
+  .logo-wrapper,
+  .landing-brand,
+  .landing-logo {
+    display: flex;
+    align-items: center;
+    width: auto;
+    overflow: visible;
+    min-width: fit-content;
+    flex-shrink: 0;
+  }
+
+  .landing-navbar {
+    min-height: 112px;
+    padding: 20px 36px;
+  }
+
+  .hero-section {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 0;
+  }
+
+  .hero-section::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(3, 22, 22, 0.9) 0%, rgba(3, 22, 22, 0.72) 45%, rgba(3, 22, 22, 0.4) 100%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .pill-button,
+  .hero-pill,
+  .nav-cta,
+  .nav-login {
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .nav-login {
+    border: 1px solid rgba(6, 78, 85, 0.18);
+    padding: 10px 20px;
+    font-weight: 500;
+    color: #064e55;
+    transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease;
+  }
+
+  .nav-login:hover {
+    border-color: rgba(6, 78, 85, 0.3);
+    background: rgba(6, 78, 85, 0.04);
+  }
+
+  .nav-cta {
+    background: #f59e0b;
+    padding: 10px 20px;
+    font-weight: 500;
+    color: #fff;
+    transition: background-color 200ms ease;
+  }
+
+  .nav-cta:hover {
+    background: #ea8a00;
+  }
+
+  .landing-footer {
+    display: grid;
+    gap: 24px;
+  }
+
+  .landing-footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .landing-footer-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(148, 163, 184, 0.24);
+    padding-top: 18px;
+  }
+
+  .icon-button,
+  .play-icon,
+  .round-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
   button,
   input,
   select,
@@ -84,6 +229,39 @@
   }
 }
 
+@media (max-width: 768px) {
+  @layer base {
+    .tapro-logo-sm {
+      height: 42px;
+      max-width: 200px;
+    }
+
+    .tapro-logo-md {
+      height: 64px;
+      max-width: 300px;
+    }
+
+    .tapro-logo-lg {
+      height: 92px;
+      max-width: 420px;
+    }
+
+    .tapro-logo-navbar {
+      height: 52px;
+      max-width: 240px;
+    }
+
+    .tapro-logo-hero {
+      height: 82px;
+      max-width: 320px;
+    }
+
+    .landing-navbar {
+      min-height: 84px;
+      padding: 14px 18px;
+    }
+  }
+}
 @layer utilities {
   .font-editorial {
     font-family: 'Cormorant Garamond', serif;
