@@ -54,6 +54,13 @@ const StaffDashboardPage = () => {
   return user?.backendRole === 'CASHIER' ? <CashierDashboardPage /> : <ManagerDashboardPage />;
 };
 
+const AdminInvitationsRoute = () => {
+  const user = useAppSelector((state) => state.auth.user);
+  return user?.backendRole === 'SUPER_ADMIN'
+    ? <Navigate to="/super-admin/invitations" replace />
+    : <AdminInvitationsPage />;
+};
+
 const AppRoutes = () => {
   const dispatch = useAppDispatch();
   const darkMode = useAppSelector((state) => state.ui.darkMode);
@@ -95,7 +102,7 @@ const AppRoutes = () => {
 
           <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'MANAGER']} allowedBackendRoles={['SUPER_ADMIN', 'ADMIN']} />}>
             <Route path="/admin/dashboard" element={<ManagerDashboardPage />} />
-            <Route path="/admin/invitations" element={<AdminInvitationsPage />} />
+            <Route path="/admin/invitations" element={<AdminInvitationsRoute />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['RESTAURANT_OWNER']} />}>

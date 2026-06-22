@@ -235,10 +235,10 @@ export interface InviteUserPayload {
 }
 
 export interface Invitation {
-  id: string;
-  name: string;
+  id: string | number;
   email: string;
-  role: UserRole;
+  role: BackendRole;
+  restaurantId?: number | null;
   restaurantName?: string;
   status: 'PENDING' | 'ACCEPTED' | 'CANCELLED';
   invitationLink: string;
