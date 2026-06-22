@@ -19,6 +19,7 @@ export type BackendRole =
 
 export type InvitationRole = Exclude<BackendRole, 'SUPER_ADMIN' | 'CUSTOMER'>;
 export type OwnerInvitationRole = Extract<BackendRole, 'STAFF' | 'KITCHEN'>;
+export type CurrencyCode = 'LKR' | 'USD';
 
 export interface SessionUser {
   email: string;
@@ -104,7 +105,8 @@ export interface Restaurant {
   openingHours: string;
   serviceChargePercentage: number;
   taxPercentage: number;
-  currency: string;
+  currencyCode?: CurrencyCode;
+  currency?: string;
   themeColor: string;
   status?: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
   activeOrderCount?: number;
@@ -123,7 +125,7 @@ export interface RestaurantFormValues {
   openingHours: string;
   serviceChargePercentage: number;
   taxPercentage: number;
-  currency: string;
+  currencyCode: CurrencyCode;
   themeColor: string;
 }
 
@@ -159,6 +161,7 @@ export interface MenuItem {
   categoryName?: string;
   restaurantId: number;
   restaurantName?: string;
+  restaurantCurrencyCode?: CurrencyCode;
 }
 
 export interface MenuItemFormValues {
@@ -214,6 +217,7 @@ export interface Order {
   tableNumber: string;
   status: OrderStatus;
   totalAmount: number;
+  restaurantCurrencyCode?: CurrencyCode;
   orderTime: string;
   items: OrderItem[];
 }

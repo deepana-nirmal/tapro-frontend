@@ -7,7 +7,12 @@ import { ImageWithFallback, initialsFromName } from '../components/shared/ImageW
 import { Button, Card, DataTable, Input, LoadingBlock, OrderItemsList, PageHeader, Select, StatCard, StatusBadge, Textarea } from '../components/ui';
 import { formatCurrency, formatDateTime } from '../utils/format';
 import { validateImageFile } from '../utils/upload';
-import { OwnerInvitationRole, RestaurantFormValues } from '../types';
+import { CurrencyCode, OwnerInvitationRole, RestaurantFormValues } from '../types';
+
+const currencyOptions: Array<{ value: CurrencyCode; label: string }> = [
+  { value: 'LKR', label: 'LKR - Sri Lankan Rupee' },
+  { value: 'USD', label: 'USD - US Dollar' },
+];
 
 export const OwnerDashboardPage = () => {
   const { data: metrics } = useAsyncResource(() => dashboardService.ownerMetrics(), []);
@@ -36,7 +41,7 @@ export const RestaurantProfilePage = () => {
     openingHours: '',
     serviceChargePercentage: 0,
     taxPercentage: 0,
-    currency: 'USD',
+    currencyCode: 'LKR',
     themeColor: '#10b981',
   });
   const [saveLoading, setSaveLoading] = useState(false);
@@ -62,7 +67,7 @@ export const RestaurantProfilePage = () => {
       openingHours: restaurant.openingHours || '',
       serviceChargePercentage: restaurant.serviceChargePercentage ?? 0,
       taxPercentage: restaurant.taxPercentage ?? 0,
-      currency: restaurant.currency || 'USD',
+      currencyCode: restaurant.currencyCode || 'LKR',
       themeColor: restaurant.themeColor || '#10b981',
     });
   }, [restaurant]);
@@ -161,7 +166,9 @@ export const RestaurantProfilePage = () => {
           <Input label="Restaurant Name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
           <Input label="Support Email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
           <Input label="Phone" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} required />
-          <Input label="Currency" value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value.toUpperCase() })} required maxLength={10} />
+          <Select label="Currency" value={form.currencyCode} onChange={(event) => setForm({ ...form, currencyCode: event.target.value as CurrencyCode })}>
+            {currencyOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </Select>
           <Input label="Theme Color" value={form.themeColor} onChange={(event) => setForm({ ...form, themeColor: event.target.value })} placeholder="#10b981" required />
           <Textarea label="Address" value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} required />
           <Textarea label="Description" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
@@ -850,7 +857,7 @@ export const MenuItemsManagementPage = () => {
                   </div>
                 ),
               },
-              { key: 'price', label: 'Price', render: (row) => formatCurrency(row.price) },
+              { key: 'price', label: 'Price', render: (row) => formatCurrency(row.price, row.restaurantCurrencyCode || 'LKR') },
               { key: 'prep', label: 'Prep', render: (row) => `${row.preparationTime} min` },
               { key: 'status', label: 'Status', render: (row) => <StatusBadge value={row.status} /> },
               { key: 'featured', label: 'Featured', render: (row) => <StatusBadge value={row.featured ? row.featuredLabel || 'FEATURED' : 'STANDARD'} /> },
@@ -1049,8 +1056,8 @@ export const OwnerOrdersPage = () => {
             { key: 'id', label: 'Order', render: (row) => `#${row.id}` },
             { key: 'table', label: 'Table', render: (row) => row.tableNumber },
             { key: 'status', label: 'Status', render: (row) => <StatusBadge value={row.status} /> },
-            { key: 'items', label: 'Items', render: (row) => <OrderItemsList items={row.items} emptyLabel="Could not load orders." /> },
-            { key: 'total', label: 'Total', render: (row) => formatCurrency(row.totalAmount) },
+            { key: 'items', label: 'Items', render: (row) => <OrderItemsList items={row.items} currencyCode={row.restaurantCurrencyCode || 'LKR'} emptyLabel="Could not load orders." /> },
+            { key: 'total', label: 'Total', render: (row) => formatCurrency(row.totalAmount, row.restaurantCurrencyCode || 'LKR') },
             { key: 'time', label: 'Placed', render: (row) => formatDateTime(row.orderTime) },
             ...(tab === 'ACTIVE'
               ? [{
@@ -1076,7 +1083,14 @@ export const OwnerOrdersPage = () => {
 };
 
 export const OwnerReportsPage = () => {
+  const user = useAppSelector((state) => state.auth.user);
+  const restaurantId = user?.restaurantId;
   const { data: analytics, loading, error } = useAsyncResource(() => ownerAnalyticsService.getAnalytics(), []);
+  const { data: restaurant } = useAsyncResource(
+    () => (restaurantId ? restaurantService.getById(restaurantId) : Promise.resolve(null)),
+    [restaurantId]
+  );
+  const currencyCode = restaurant?.currencyCode || 'LKR';
 
   if (loading) {
     return <LoadingBlock label="Loading analytics..." />;
@@ -1095,10 +1109,10 @@ export const OwnerReportsPage = () => {
     <div className="space-y-6">
       <PageHeader title="Restaurant Reports" description="Real backend revenue, order volume, item performance, and ordering hour trends." />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Revenue Today" value={formatCurrency(analytics.revenue.today)} helper="Revenue booked since midnight" tone="emerald" />
-        <StatCard label="Revenue This Week" value={formatCurrency(analytics.revenue.week)} helper="Revenue booked since Monday" tone="blue" />
-        <StatCard label="Revenue This Month" value={formatCurrency(analytics.revenue.month)} helper="Revenue booked this month" tone="amber" />
-        <StatCard label="Average Order Value" value={formatCurrency(analytics.averageOrderValue)} helper="Average non-cancelled order total" tone="rose" />
+        <StatCard label="Revenue Today" value={formatCurrency(analytics.revenue.today, currencyCode)} helper="Revenue booked since midnight" tone="emerald" />
+        <StatCard label="Revenue This Week" value={formatCurrency(analytics.revenue.week, currencyCode)} helper="Revenue booked since Monday" tone="blue" />
+        <StatCard label="Revenue This Month" value={formatCurrency(analytics.revenue.month, currencyCode)} helper="Revenue booked this month" tone="amber" />
+        <StatCard label="Average Order Value" value={formatCurrency(analytics.averageOrderValue, currencyCode)} helper="Average non-cancelled order total" tone="rose" />
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -1122,7 +1136,7 @@ export const OwnerReportsPage = () => {
               columns={[
                 { key: 'name', label: 'Item', render: (row) => row.itemName },
                 { key: 'quantity', label: 'Qty', render: (row) => row.quantity },
-                { key: 'revenue', label: 'Revenue', render: (row) => formatCurrency(row.revenue) },
+                { key: 'revenue', label: 'Revenue', render: (row) => formatCurrency(row.revenue, currencyCode) },
               ]}
               rows={analytics.topSellingItems}
             />
@@ -1135,7 +1149,7 @@ export const OwnerReportsPage = () => {
               columns={[
                 { key: 'name', label: 'Item', render: (row) => row.itemName },
                 { key: 'quantity', label: 'Qty', render: (row) => row.quantity },
-                { key: 'revenue', label: 'Revenue', render: (row) => formatCurrency(row.revenue) },
+                { key: 'revenue', label: 'Revenue', render: (row) => formatCurrency(row.revenue, currencyCode) },
               ]}
               rows={analytics.leastSellingItems}
             />
@@ -1158,9 +1172,9 @@ export const OwnerReportsPage = () => {
         <Card>
           <h3 className="text-lg font-semibold text-slate-950 dark:text-white">Revenue Summary</h3>
           <div className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300">
-            <p>{`Today: ${formatCurrency(analytics.revenue.today)}`}</p>
-            <p>{`Week: ${formatCurrency(analytics.revenue.week)}`}</p>
-            <p>{`Month: ${formatCurrency(analytics.revenue.month)}`}</p>
+            <p>{`Today: ${formatCurrency(analytics.revenue.today, currencyCode)}`}</p>
+            <p>{`Week: ${formatCurrency(analytics.revenue.week, currencyCode)}`}</p>
+            <p>{`Month: ${formatCurrency(analytics.revenue.month, currencyCode)}`}</p>
           </div>
         </Card>
         <Card>

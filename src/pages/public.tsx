@@ -630,7 +630,7 @@ export const RestaurantMenuPage = () => {
                 </div>
                 <div className="mt-6 flex items-center justify-between gap-3">
                   <div>
-                    <span className="text-lg font-semibold text-slate-950">{formatCurrency(item.price)}</span>
+                    <span className="text-lg font-semibold text-slate-950">{formatCurrency(item.price, restaurant?.currencyCode || item.restaurantCurrencyCode || 'LKR')}</span>
                     <p className="mt-1 text-xs text-slate-500">
                       {item.status === 'AVAILABLE' ? 'Available now' : 'Currently unavailable'}
                     </p>
@@ -668,7 +668,7 @@ export const RestaurantMenuPage = () => {
               <p className="text-xs text-slate-300">Ready to place your order</p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-semibold">{formatCurrency(cartTotal)}</p>
+              <p className="text-lg font-semibold">{formatCurrency(cartTotal, restaurant?.currencyCode || 'LKR')}</p>
               <p className="text-xs text-slate-300">View cart</p>
             </div>
           </Link>
@@ -691,6 +691,10 @@ export const CheckoutPage = () => {
   })();
   const [tableNumber, setTableNumber] = useState(activeTableContext.tableNumber || 'A1');
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const { data: restaurant } = useAsyncResource(
+    () => (activeTableContext.restaurantId ? restaurantService.getPublicById(activeTableContext.restaurantId) : Promise.resolve(null)),
+    [activeTableContext.restaurantId]
+  );
 
   const submitOrder = async () => {
     if (!cart.length) {
@@ -741,7 +745,7 @@ export const CheckoutPage = () => {
                   <div key={item.menuItemId} className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
                     <div>
                       <h3 className="font-semibold text-slate-950 dark:text-white">{item.name}</h3>
-                      <p className="text-sm text-slate-600 dark:text-slate-300">{formatCurrency(item.price)} each</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-300">{formatCurrency(item.price, restaurant?.currencyCode || 'LKR')} each</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <Input type="number" min={1} value={item.quantity} onChange={(event) => dispatch(updateQuantity({ menuItemId: item.menuItemId, quantity: Number(event.target.value) }))} className="w-24" />
@@ -751,7 +755,7 @@ export const CheckoutPage = () => {
                 ))}
               </div>
               <div className="mt-6 flex items-center justify-between border-t border-slate-200 pt-6 dark:border-slate-800">
-                <p className="text-lg font-semibold text-slate-950 dark:text-white">Total: {formatCurrency(total)}</p>
+                <p className="text-lg font-semibold text-slate-950 dark:text-white">Total: {formatCurrency(total, restaurant?.currencyCode || 'LKR')}</p>
                 <Button onClick={submitOrder}>Place order</Button>
               </div>
             </Card>
@@ -842,9 +846,9 @@ export const TrackOrderPage = () => {
           <div className="mt-6 rounded-2xl bg-white/70 p-4">
             <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Items</h3>
             <div className="mt-3">
-              <OrderItemsList items={order.items} emptyLabel="Could not load orders." />
+              <OrderItemsList items={order.items} currencyCode={order.restaurantCurrencyCode || restaurant?.currencyCode || 'LKR'} emptyLabel="Could not load orders." />
             </div>
-            <p className="mt-4 text-lg font-semibold text-slate-950">Total: {formatCurrency(order.totalAmount)}</p>
+            <p className="mt-4 text-lg font-semibold text-slate-950">Total: {formatCurrency(order.totalAmount, order.restaurantCurrencyCode || restaurant?.currencyCode || 'LKR')}</p>
           </div>
         </Card>
       </div>

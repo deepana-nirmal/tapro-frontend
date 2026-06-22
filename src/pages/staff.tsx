@@ -26,7 +26,7 @@ export const ManagerMenuPage = () => {
         <DataTable
           columns={[
             { key: 'item', label: 'Item', render: (row) => row.name },
-            { key: 'price', label: 'Price', render: (row) => formatCurrency(row.price) },
+            { key: 'price', label: 'Price', render: (row) => formatCurrency(row.price, row.restaurantCurrencyCode || 'LKR') },
             { key: 'availability', label: 'Availability', render: (row) => <StatusBadge value={row.status} /> },
             { key: 'actions', label: 'Actions', render: () => <div className="flex gap-2"><Button variant="ghost">Edit</Button><Button variant="ghost">Create Category</Button></div> },
           ]}
@@ -155,8 +155,8 @@ export const BillingPage = () => {
           columns={[
             { key: 'order', label: 'Order', render: (row) => `#${row.id}` },
             { key: 'table', label: 'Table', render: (row) => row.tableNumber },
-            { key: 'items', label: 'Items', render: (row) => <OrderItemsList items={row.items} emptyLabel="Could not load orders." /> },
-            { key: 'amount', label: 'Amount', render: (row) => formatCurrency(row.totalAmount) },
+            { key: 'items', label: 'Items', render: (row) => <OrderItemsList items={row.items} currencyCode={row.restaurantCurrencyCode || 'LKR'} emptyLabel="Could not load orders." /> },
+            { key: 'amount', label: 'Amount', render: (row) => formatCurrency(row.totalAmount, row.restaurantCurrencyCode || 'LKR') },
             { key: 'receipt', label: 'Receipt', render: () => <div className="flex gap-2"><Button variant="ghost">View Bill</Button><Button>Print Receipt</Button></div> },
           ]}
           rows={orders || []}
@@ -176,8 +176,8 @@ export const PaymentsPage = () => {
           columns={[
             { key: 'order', label: 'Order', render: (row) => `#${row.id}` },
             { key: 'status', label: 'Status', render: (row) => <StatusBadge value={row.status} /> },
-            { key: 'items', label: 'Items', render: (row) => <OrderItemsList items={row.items} emptyLabel="Could not load orders." /> },
-            { key: 'amount', label: 'Amount', render: (row) => formatCurrency(row.totalAmount) },
+            { key: 'items', label: 'Items', render: (row) => <OrderItemsList items={row.items} currencyCode={row.restaurantCurrencyCode || 'LKR'} emptyLabel="Could not load orders." /> },
+            { key: 'amount', label: 'Amount', render: (row) => formatCurrency(row.totalAmount, row.restaurantCurrencyCode || 'LKR') },
             {
               key: 'actions',
               label: 'Actions',
