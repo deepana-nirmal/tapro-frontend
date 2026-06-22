@@ -58,11 +58,7 @@ export const navigationByRole: Record<UserRole, NavItem[]> = {
 
 export const getNavigationForUser = (user: SessionUser): NavItem[] => {
   if (user.backendRole === 'SUPER_ADMIN') {
-    return navigationByRole.SUPER_ADMIN.map((item) =>
-      item.path === '/super-admin/invitations'
-        ? { ...item, path: '/admin/invitations', description: 'Role-based onboarding' }
-        : item
-    );
+    return navigationByRole.SUPER_ADMIN;
   }
 
   if (user.backendRole === 'ADMIN') {

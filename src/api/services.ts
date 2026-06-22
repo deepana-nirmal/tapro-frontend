@@ -36,7 +36,6 @@ import {
   UsersByRestaurantGroup,
 } from '../types';
 import {
-  mockActivities,
   mockPlans,
   mockReportSeries,
   mockRestaurants,
@@ -515,6 +514,9 @@ export const invitationService = {
   async sendInvitation(email: string, role: InvitationRole, restaurantId: number): Promise<void> {
     await apiClient.post<ApiEnvelope<null> | null>('/invitations', { email, role, restaurantId } satisfies InvitationRequest);
   },
+  async sendSuperAdminInvitation(email: string, role: InvitationRole, restaurantId: number): Promise<void> {
+    await apiClient.post<ApiEnvelope<null> | null>('/super-admin/invitations', { email, role, restaurantId } satisfies InvitationRequest);
+  },
   async verifyInvitation(token: string): Promise<InvitationVerifyResponse> {
     const response = await apiClient.get<ApiEnvelope<InvitationVerifyResponse> | InvitationVerifyResponse>(
       `/invitations/verify?token=${encodeURIComponent(token)}`
@@ -534,10 +536,20 @@ export const invitationService = {
     const response = await apiClient.get<ApiEnvelope<Invitation[]> | Invitation[]>('/invitations');
     return unwrap(response.data);
   },
+  listSuperAdmin: async () => {
+    const response = await apiClient.get<ApiEnvelope<Invitation[]> | Invitation[]>('/super-admin/invitations');
+    return unwrap(response.data);
+  },
+  deleteSuperAdmin: async (id: string | number) => {
+    await apiClient.delete(`/super-admin/invitations/${id}`);
+    return true;
+  },
   create: (payload: InviteUserPayload) =>
     withFallback(apiClient.post<Invitation>('/invitations', { ...payload, role: toBackendRole(payload.role) }), {
       id: `inv-${Date.now()}`,
-      ...payload,
+      email: payload.email,
+      role: toBackendRole(payload.role),
+      restaurantId: payload.restaurantId,
       restaurantName: mockRestaurants.find((restaurant) => restaurant.id === payload.restaurantId)?.name,
       status: 'PENDING',
       invitationLink: `https://tapro.app/invite/accept?token=inv-${Date.now()}`,
@@ -604,13 +616,8 @@ export const reportingService = {
 
 export const dashboardService = {
   async superAdminMetrics(): Promise<DashboardMetric[]> {
-    const [restaurants, orders] = await Promise.all([restaurantService.listAdmin(), orderService.list()]);
-    return [
-      { label: 'Total Restaurants', value: restaurants.length, helper: 'Active tenants across the platform', tone: 'blue' },
-      { label: 'Total Owners', value: restaurants.length, helper: 'Owner accounts currently assigned', tone: 'emerald' },
-      { label: 'Total Users', value: restaurants.length * 4, helper: 'Estimated active staff and owners', tone: 'amber' },
-      { label: 'Total Orders', value: orders.length, helper: 'Orders flowing through all restaurants', tone: 'rose' },
-    ];
+    const response = await apiClient.get<ApiEnvelope<DashboardMetric[]> | DashboardMetric[]>('/super-admin/dashboard');
+    return unwrap(response.data);
   },
   async ownerMetrics(): Promise<DashboardMetric[]> {
     const analytics = await ownerAnalyticsService.getAnalytics();
@@ -644,7 +651,10 @@ export const dashboardService = {
       { label: "Today's Revenue", value: `$${orders.reduce((sum, order) => sum + order.totalAmount, 0).toFixed(0)}`, helper: 'Settled and unsettled bill total', tone: 'emerald' },
     ];
   },
-  activities: async (): Promise<ActivityItem[]> => withFallback(apiClient.get<ActivityItem[]>('/activities/recent'), mockActivities),
+  activities: async (): Promise<ActivityItem[]> => {
+    const response = await apiClient.get<ApiEnvelope<ActivityItem[]> | ActivityItem[]>('/super-admin/dashboard/activities');
+    return unwrap(response.data);
+  },
 };
 
 export const superAdminUserService = {
