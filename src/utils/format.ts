@@ -1,7 +1,10 @@
-export const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('en-US', {
+import { CurrencyCode } from '../types';
+
+export const formatCurrency = (value: number, currencyCode: CurrencyCode = 'LKR') =>
+  new Intl.NumberFormat(currencyCode === 'LKR' ? 'en-LK' : 'en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: currencyCode,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value || 0);
 
