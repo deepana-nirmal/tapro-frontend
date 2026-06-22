@@ -60,57 +60,61 @@ export const LandingPage = () => {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(6,78,85,0.12),transparent_28%),radial-gradient(circle_at_top_right,rgba(249,115,22,0.12),transparent_26%),linear-gradient(180deg,#fffefb_0%,#f6f7f3_100%)] px-4 py-4 text-slate-950">
       <div className="mx-auto max-w-[1560px] rounded-[40px] border border-white/70 bg-white/88 p-4 shadow-[0_45px_120px_rgba(15,23,42,0.12)] backdrop-blur md:p-6">
-        <header className="flex flex-col gap-5 rounded-[30px] border border-slate-200/80 bg-white px-5 py-4 md:flex-row md:items-center md:justify-between md:px-7">
-          <TaproLogo imageClassName="h-12 md:h-14" />
+        <header className="landing-navbar flex flex-col gap-5 rounded-[30px] border border-slate-200/80 bg-white md:flex-row md:items-center md:justify-between">
+          <div className="logo-wrapper landing-brand">
+            <TaproLogo size="md" className="tapro-logo-navbar" />
+          </div>
           <nav className="flex flex-wrap items-center gap-3 text-sm text-slate-600 md:gap-6">
             <a href="#how-it-works" className="transition hover:text-slate-950">How It Works</a>
             <a href="#features" className="transition hover:text-slate-950">Features</a>
             <a href="#operators" className="transition hover:text-slate-950">Teams</a>
             <a href="#contact" className="transition hover:text-slate-950">Contact</a>
-            <Link to="/login" className="rounded-full border border-[#064E55]/18 px-5 py-2 font-medium text-[#064E55] transition hover:border-[#064E55]/30 hover:bg-[#064E55]/4">
+            <Link to="/login" className="nav-login">
               Login
             </Link>
-            <Link to="/register" className="rounded-full bg-[#F59E0B] px-5 py-2 font-medium text-white transition hover:bg-[#EA8A00]">
+            <Link to="/register" className="nav-cta">
               Get Started
             </Link>
           </nav>
         </header>
 
         <section className="mt-4 rounded-[34px] border border-slate-900/10 bg-[#03292d] p-3 shadow-[0_25px_80px_rgba(3,41,45,0.18)]">
-          <div
-            className="relative overflow-hidden rounded-[30px] px-6 pb-8 pt-6 md:min-h-[720px] md:px-10 md:pb-10"
-            style={{ backgroundImage: `linear-gradient(90deg, rgba(2,20,23,0.92) 0%, rgba(2,20,23,0.80) 38%, rgba(2,20,23,0.38) 100%), url(${heroImages.main})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(245,158,11,0.22),transparent_22%),radial-gradient(circle_at_top_right,rgba(255,255,255,0.14),transparent_25%)]" />
-            <div className="relative flex flex-col gap-10">
+          <div className="hero-section relative overflow-hidden rounded-[30px] px-6 pb-8 pt-6 md:min-h-[720px] md:px-10 md:pb-10">
+            <img src="/assets/tapro-hero.png" alt="Restaurant interior" className="hero-bg-image" />
+            <div className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_bottom_left,rgba(245,158,11,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_28%)]" />
+            <div className="relative z-[2] flex flex-col gap-10">
               <div className="flex flex-col gap-4 border-b border-white/12 pb-4 md:flex-row md:items-center md:justify-between">
-                <div className="rounded-full border border-white/15 bg-white/92 px-4 py-2 shadow-lg shadow-slate-950/10">
-                  <TaproLogo imageClassName="h-10 md:h-11" />
+                <div className="logo-wrapper landing-logo rounded-full border border-white/15 bg-white/92 px-4 py-2 shadow-lg shadow-slate-950/10">
+                  <TaproLogo size="lg" className="tapro-logo-hero" />
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-white/84">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 backdrop-blur">
-                    <CirclePlay className="h-4 w-4 text-[#F59E0B]" />
+                  <div className="hero-pill border border-white/14 bg-slate-950/24 px-4 py-2.5 text-white/88">
+                    <span className="round-icon bg-white/10 text-[#F59E0B]">
+                      <CirclePlay className="h-4 w-4" />
+                    </span>
                     <span>See how Tapro works</span>
                   </div>
-                  <Link to="/login" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 font-medium text-slate-950 transition hover:bg-slate-100">
+                  <Link to="/login" className="hero-pill bg-white px-5 py-2.5 font-medium text-slate-950 transition hover:bg-slate-100">
                     View Demo
-                    <ArrowRight className="h-4 w-4" />
+                    <span className="round-icon bg-slate-950 text-white">
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
                   </Link>
                 </div>
               </div>
 
-              <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+              <div className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] lg:items-end">
                 <div className="max-w-3xl pt-4 md:pt-10 lg:pt-16">
                   <p className="text-[11px] uppercase tracking-[0.36em] text-[#F7C15B]">Restaurant SaaS for modern service</p>
                   <h1 className="mt-5 text-5xl font-semibold leading-[0.92] tracking-[-0.06em] text-white sm:text-6xl lg:text-7xl">
                     QR ordering made simple for modern restaurants
                   </h1>
-                  <p className="mt-6 max-w-2xl text-base leading-7 text-slate-100/88 md:text-lg">
+                  <p className="mt-6 max-w-2xl text-base leading-7 text-white/88 md:text-lg">
                     Tapro helps restaurants manage QR table ordering, live kitchen updates, menus, staff, and multi-branch operations from one clean platform.
                   </p>
 
                   <form
-                    className="mt-8 flex flex-col gap-3 rounded-[28px] bg-white p-3 shadow-[0_20px_40px_rgba(2,20,23,0.24)] sm:flex-row sm:items-center"
+                    className="mt-8 flex flex-col gap-3 rounded-[30px] bg-white/96 p-3 shadow-[0_20px_40px_rgba(2,20,23,0.28)] sm:flex-row sm:items-center"
                     onSubmit={(event) => {
                       event.preventDefault();
                       navigate('/register');
@@ -126,17 +130,20 @@ export const LandingPage = () => {
                     />
                     <button
                       type="submit"
-                      className="inline-flex items-center justify-center rounded-full bg-[#F59E0B] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#EA8A00]"
+                      className="hero-pill justify-center bg-[#F59E0B] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#EA8A00]"
                     >
                       Get Started
                     </button>
                   </form>
 
-                  <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-white/78">
-                    <Link to="/login" className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-4 py-2 backdrop-blur transition hover:bg-white/14">
+                  <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-white/82">
+                    <Link to="/login" className="hero-pill border border-white/14 bg-slate-950/24 px-4 py-2.5 text-white transition hover:bg-slate-950/34">
+                      <span className="round-icon bg-white/10 text-[#F7C15B]">
+                        <CirclePlay className="h-4 w-4" />
+                      </span>
                       See how Tapro works
                     </Link>
-                    <span className="inline-flex items-center gap-2 rounded-full px-2 py-1">
+                    <span className="hero-pill px-2 py-1 text-white/78">
                       <Clock3 className="h-4 w-4 text-[#F7C15B]" />
                       Go live fast across single or multi-branch operations
                     </span>
@@ -144,22 +151,22 @@ export const LandingPage = () => {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                  <div className="rounded-[28px] border border-white/12 bg-white/10 p-5 text-white backdrop-blur-lg">
-                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/60">Trusted service layer</p>
+                  <div className="rounded-[28px] border border-white/12 bg-[#082a2f]/74 p-5 text-white shadow-[0_24px_60px_rgba(2,20,23,0.18)]">
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-white/66">Trusted service layer</p>
                     <div className="mt-8 grid grid-cols-3 gap-3">
                       {[
                         ['24/7', 'Live menu access'],
                         ['4 roles', 'Owner to kitchen'],
                         ['1 flow', 'Scan to checkout'],
                       ].map(([value, label]) => (
-                        <div key={value} className="rounded-2xl border border-white/12 bg-black/12 p-4">
+                        <div key={value} className="rounded-2xl border border-white/12 bg-black/18 p-4">
                           <p className="text-2xl font-semibold">{value}</p>
-                          <p className="mt-2 text-xs leading-5 text-white/70">{label}</p>
+                          <p className="mt-2 text-xs leading-5 text-white/76">{label}</p>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-[28px] border border-white/12 bg-black/24 p-5 text-white backdrop-blur">
+                  <div className="rounded-[28px] border border-white/12 bg-[#041d21]/74 p-5 text-white shadow-[0_24px_60px_rgba(2,20,23,0.18)]">
                     <p className="text-[11px] uppercase tracking-[0.3em] text-[#F7C15B]">Operations at a glance</p>
                     <div className="mt-6 space-y-4">
                       {[
@@ -167,9 +174,9 @@ export const LandingPage = () => {
                         ['Kitchen coordination', 'Tickets update in real time for kitchen and cashier teams.'],
                         ['Multi-branch visibility', 'Owners monitor menus, orders, and service from one dashboard.'],
                       ].map(([title, copy]) => (
-                        <div key={title} className="rounded-2xl border border-white/10 bg-white/6 p-4">
+                        <div key={title} className="rounded-2xl border border-white/10 bg-white/8 p-4">
                           <p className="font-semibold">{title}</p>
-                          <p className="mt-2 text-sm leading-6 text-white/72">{copy}</p>
+                          <p className="mt-2 text-sm leading-6 text-white/80">{copy}</p>
                         </div>
                       ))}
                     </div>
@@ -183,9 +190,9 @@ export const LandingPage = () => {
                   ['Role-specific workspaces', 'Owners, floor staff, cashiers, and kitchen teams each get the right view for service.'],
                   ['Clear business visibility', 'Track orders, table demand, and multi-location performance without extra tooling.'],
                 ].map(([title, description]) => (
-                  <div key={title} className="rounded-[24px] border border-white/12 bg-white/8 p-5 text-white backdrop-blur">
+                  <div key={title} className="rounded-[24px] border border-white/12 bg-[#082a2f]/68 p-5 text-white">
                     <h3 className="text-xl font-semibold">{title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-white/74">{description}</p>
+                    <p className="mt-3 text-sm leading-6 text-white/80">{description}</p>
                   </div>
                 ))}
               </div>
@@ -400,19 +407,23 @@ export const LandingPage = () => {
           </div>
         </section>
 
-        <footer className="mt-4 rounded-[30px] border border-slate-200 bg-white px-5 py-6 md:px-7">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <TaproLogo imageClassName="h-11 md:h-12" />
-              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
-                Premium QR ordering and restaurant operations software for modern service teams.
+        <footer className="mt-4 rounded-[30px] border border-slate-200 bg-white px-5 py-6 md:px-7 md:py-8">
+          <div className="landing-footer">
+            <div className="landing-footer-brand">
+              <TaproLogo size="md" />
+              <p className="max-w-xl text-sm leading-6 text-slate-600">
+                QR ordering and restaurant operations platform for modern restaurants.
               </p>
             </div>
             <div className="flex flex-wrap gap-5 text-sm text-slate-500">
-              <a href="#how-it-works" className="transition hover:text-slate-900">How Tapro Works</a>
+              <a href="#how-it-works" className="transition hover:text-slate-900">How It Works</a>
               <a href="#features" className="transition hover:text-slate-900">Features</a>
               <a href="#operators" className="transition hover:text-slate-900">Teams</a>
               <a href="#contact" className="transition hover:text-slate-900">Contact</a>
+            </div>
+            <div className="landing-footer-meta text-sm text-slate-500">
+              <p>Talk to Tapro about onboarding, rollout, or platform customization.</p>
+              <p>© 2026 Tapro. All rights reserved.</p>
             </div>
           </div>
         </footer>
