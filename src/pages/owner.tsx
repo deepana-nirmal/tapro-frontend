@@ -717,7 +717,8 @@ export const MenuItemsManagementPage = () => {
     preparationTime: Number(values.preparationTime),
     categoryId: Number(values.categoryId),
     restaurantId: restaurantId || 0,
-    imageUrl: 'imageUrl' in values ? values.imageUrl : '',
+    // Do not send an empty imageUrl string; leave undefined when not provided.
+    imageUrl: 'imageUrl' in values ? values.imageUrl : undefined,
     ingredients: values.ingredients.split(',').map((item) => item.trim()).filter(Boolean),
     allergens: values.allergens.split(',').map((item) => item.trim()).filter(Boolean),
   });
