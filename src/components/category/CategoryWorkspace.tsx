@@ -52,7 +52,8 @@ const toMenuPayload = (restaurantId: number, categoryId: number, values: MenuIte
   restaurantId,
   ingredients: values.ingredients.split(',').map((item) => item.trim()).filter(Boolean),
   allergens: values.allergens.split(',').map((item) => item.trim()).filter(Boolean),
-  imageUrl: '',
+  // Do not send an empty imageUrl string; leave undefined unless explicitly set elsewhere.
+  imageUrl: undefined,
 });
 
 export const CategoryWorkspace = ({
