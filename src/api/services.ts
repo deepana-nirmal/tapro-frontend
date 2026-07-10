@@ -336,15 +336,8 @@ export const menuService = {
     );
     return normalizeMenuItem(unwrap(response.data));
   },
-  uploadImage: async (id: number, file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await apiClient.post<ApiEnvelope<MenuItem> | MenuItem>(`/menu-items/${id}/image`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+  uploadImage: async (id: number, formData: FormData) => {
+    const response = await apiClient.post<ApiEnvelope<MenuItem> | MenuItem>(`/menu-items/${id}/image`, formData);
 
     return normalizeMenuItem(unwrap(response.data));
   },

@@ -232,9 +232,11 @@ export const CategoryWorkspace = ({
 
     try {
       const item = await menuService.create(toMenuPayload(restaurantId, selectedCategory.id, createMenuItem));
-      if (createMenuImage) {
+      if (createMenuImage instanceof File) {
         validateImageFile(createMenuImage);
-        await menuService.uploadImage(item.id, createMenuImage);
+        const formData = new FormData();
+        formData.append('file', createMenuImage);
+        await menuService.uploadImage(item.id, formData);
       }
       setCreateMenuItem(emptyMenuItemForm());
       setCreateMenuImage(null);
@@ -278,9 +280,11 @@ export const CategoryWorkspace = ({
 
     try {
       await menuService.update(editingMenuItemId, toMenuPayload(restaurantId, selectedCategory.id, editMenuItem));
-      if (editMenuImage) {
+      if (editMenuImage instanceof File) {
         validateImageFile(editMenuImage);
-        await menuService.uploadImage(editingMenuItemId, editMenuImage);
+        const formData = new FormData();
+        formData.append('file', editMenuImage);
+        await menuService.uploadImage(editingMenuItemId, formData);
       }
       setEditingMenuItemId(null);
       setEditMenuImage(null);

@@ -717,8 +717,8 @@ export const MenuItemsManagementPage = () => {
     preparationTime: Number(values.preparationTime),
     categoryId: Number(values.categoryId),
     restaurantId: restaurantId || 0,
-    // Do not send an empty imageUrl string; leave undefined when not provided.
-    imageUrl: 'imageUrl' in values ? values.imageUrl : undefined,
+    // Image changes use the dedicated multipart endpoint. Omitting this preserves the current image.
+    imageUrl: undefined,
     ingredients: values.ingredients.split(',').map((item) => item.trim()).filter(Boolean),
     allergens: values.allergens.split(',').map((item) => item.trim()).filter(Boolean),
   });
@@ -787,9 +787,11 @@ export const MenuItemsManagementPage = () => {
 
               try {
                 let item = await menuService.create(toPayload(form));
-                if (createImageFile) {
+                if (createImageFile instanceof File) {
                   validateImageFile(createImageFile);
-                  item = await menuService.uploadImage(item.id, createImageFile);
+                  const formData = new FormData();
+                  formData.append('file', createImageFile);
+                  item = await menuService.uploadImage(item.id, formData);
                 }
                 setData([...(items || []), item]);
                 resetCreateForm();
@@ -897,11 +899,14 @@ export const MenuItemsManagementPage = () => {
 
                 try {
                   let updated = await menuService.update(editingItemId, toPayload(editForm));
-                  if (editImageFile) {
+                  if (editImageFile instanceof File) {
                     validateImageFile(editImageFile);
-                    updated = await menuService.uploadImage(editingItemId, editImageFile);
+                    const formData = new FormData();
+                    formData.append('file', editImageFile);
+                    updated = await menuService.uploadImage(editingItemId, formData);
                   }
                   refreshRow(updated);
+                  setEditImageFile(null);
                   setEditingItemId(null);
                   toast.success('Menu item updated');
                 } catch (submitError: any) {
