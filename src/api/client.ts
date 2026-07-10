@@ -52,6 +52,18 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
+    if (process.env.NODE_ENV === 'development') {
+      const method = error.config?.method?.toUpperCase() || 'UNKNOWN';
+      const endpoint = `${error.config?.baseURL || ''}${error.config?.url || ''}`;
+      // eslint-disable-next-line no-console
+      console.error('API request failed', {
+        method,
+        endpoint,
+        status: error.response?.status,
+        responseBody: error.response?.data,
+      });
+    }
+
     if (error.response?.status === 401) {
       localStorage.removeItem('tapro_token');
       localStorage.removeItem('tapro_user');
