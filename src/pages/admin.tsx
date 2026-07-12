@@ -1076,9 +1076,8 @@ export const SuperAdminRestaurantDetailPage = () => {
               label={logoUploading ? 'Uploading logo...' : 'Upload Logo'}
               accept="image/png,image/jpeg,image/webp"
               disabled={logoUploading}
-              onChange={async (event) => {
-                const file = event.target.files?.[0];
-                event.target.value = '';
+              uploading={logoUploading}
+              onFileSelect={async (file) => {
                 if (!file) {
                   return;
                 }
