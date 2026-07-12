@@ -202,9 +202,8 @@ export const RestaurantProfilePage = () => {
             label={logoUploading ? 'Uploading logo...' : 'Upload Logo'}
             accept="image/png,image/jpeg,image/webp"
             disabled={logoUploading}
-            onChange={async (event) => {
-              const file = event.target.files?.[0];
-              event.target.value = '';
+            uploading={logoUploading}
+            onFileSelect={async (file) => {
               if (!file) {
                 return;
               }
@@ -1000,7 +999,7 @@ export const MenuItemsManagementPage = () => {
             {!categories?.length ? <p className="text-sm text-amber-600">No categories yet. Create a category first.</p> : null}
             <Textarea label="Ingredients" value={form.ingredients} onChange={(event) => setForm({ ...form, ingredients: event.target.value })} placeholder="Tomato, Basil, Olive oil" />
             <Textarea label="Allergens" value={form.allergens} onChange={(event) => setForm({ ...form, allergens: event.target.value })} placeholder="Dairy, Nuts" />
-            <FileUploader label="Image Upload" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => setCreateImageFile(event.target.files?.[0] || null)} description={createImageFile?.name} />
+            <FileUploader label="Image Upload" accept="image/png,image/jpeg,image/webp,image/gif" onFileSelect={setCreateImageFile} description={createImageFile?.name} />
             <Select label="Status" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN' })}>
               <option value="AVAILABLE">Available</option>
               <option value="OUT_OF_STOCK">Out Of Stock</option>
@@ -1109,7 +1108,7 @@ export const MenuItemsManagementPage = () => {
               </Select>
               <Textarea label="Ingredients" value={editForm.ingredients} onChange={(event) => setEditForm({ ...editForm, ingredients: event.target.value })} />
               <Textarea label="Allergens" value={editForm.allergens} onChange={(event) => setEditForm({ ...editForm, allergens: event.target.value })} />
-              <FileUploader label="Replace Image" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => setEditImageFile(event.target.files?.[0] || null)} description={editImageFile?.name} />
+              <FileUploader label="Replace Image" accept="image/png,image/jpeg,image/webp,image/gif" onFileSelect={setEditImageFile} description={editImageFile?.name} />
               <Select label="Status" value={editForm.status} onChange={(event) => setEditForm({ ...editForm, status: event.target.value as 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN' })}>
                 <option value="AVAILABLE">Available</option>
                 <option value="OUT_OF_STOCK">Out Of Stock</option>
