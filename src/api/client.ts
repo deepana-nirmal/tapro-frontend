@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { clearAuthSession, getStoredSession } from '../utils/authStorage';
 import { broadcastSessionExpired } from '../utils/sessionEvents';
+import { logger } from '../utils/logger';
 
 const developmentApiUrl = 'http://localhost:8080/api';
 const configuredApiUrl = process.env.REACT_APP_API_URL?.trim();
@@ -10,8 +11,7 @@ export const baseURL = configuredApiUrl || (process.env.NODE_ENV === 'developmen
 if (!configuredApiUrl && process.env.NODE_ENV !== 'development') {
   // Production deployments must inject REACT_APP_API_URL so the frontend talks to the deployed backend.
   // An empty base URL avoids silently falling back to localhost in production builds.
-  // eslint-disable-next-line no-console
-  console.error('REACT_APP_API_URL is required for non-development builds.');
+  logger.error('REACT_APP_API_URL is required for non-development builds.');
 }
 
 export const apiClient = axios.create({
