@@ -1,13 +1,16 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { categoryService, dashboardService, invitationService, menuService, orderService, ownerAnalyticsService, ownerStaffService, restaurantService, tableService } from '../api/services';
+import { categoryService, invitationService, menuService, orderService, ownerAnalyticsService, ownerStaffService, restaurantService, tableService } from '../api/services';
 import { CategoryWorkspace } from '../components/category/CategoryWorkspace';
 import { useAppSelector, useAsyncResource } from '../hooks';
 import { ImageWithFallback, initialsFromName } from '../components/shared/ImageWithFallback';
-import { Button, Card, DataTable, Input, LoadingBlock, OrderItemsList, PageHeader, Select, StatCard, StatusBadge, Textarea } from '../components/ui';
+import { Button, Card, DataTable, Input, LoadingBlock, OrderItemsList, PageHeader, Select, StatusBadge, Textarea } from '../components/ui';
+import { OwnerAlert, OwnerFilterBar, OwnerMetricCard, OwnerPageHeader, OwnerQuickAction } from '../components/owner/OwnerWorkspace';
 import { formatCurrency, formatDateTime } from '../utils/format';
 import { validateImageFile } from '../utils/upload';
-import { CurrencyCode, OwnerInvitationRole, RestaurantFormValues } from '../types';
+import { CurrencyCode, MenuItem, OwnerInvitationRole, RestaurantFormValues, RestaurantTable } from '../types';
+import { analyticsHasData, filterMenuItemsForOwner, filterStaffForOwner, filterTablesForOwner, orderStatusCounts, ownerReadinessSummary } from '../utils/ownerWorkspace';
 
 const currencyOptions: Array<{ value: CurrencyCode; label: string }> = [
   { value: 'LKR', label: 'LKR - Sri Lankan Rupee' },
@@ -15,12 +18,94 @@ const currencyOptions: Array<{ value: CurrencyCode; label: string }> = [
 ];
 
 export const OwnerDashboardPage = () => {
-  const { data: metrics } = useAsyncResource(() => dashboardService.ownerMetrics(), []);
+  const user = useAppSelector((state) => state.auth.user);
+  const restaurantId = user?.restaurantId;
+  const { data: analytics, loading: analyticsLoading, error: analyticsError } = useAsyncResource(() => ownerAnalyticsService.getAnalytics(), []);
+  const { data: activeOrders } = useAsyncResource(() => orderService.ownerActiveOrders(), []);
+  const { data: restaurant } = useAsyncResource(
+    () => (restaurantId ? restaurantService.getById(restaurantId) : Promise.resolve(null)),
+    [restaurantId]
+  );
+  const { data: menuItems } = useAsyncResource(
+    () => (restaurantId ? menuService.listByRestaurantForManagement(restaurantId) : Promise.resolve([])),
+    [restaurantId]
+  );
+  const { data: tables } = useAsyncResource(
+    () => (restaurantId ? tableService.listByRestaurant(restaurantId) : Promise.resolve([])),
+    [restaurantId]
+  );
+  const { data: staffMembers } = useAsyncResource(
+    () => (restaurantId ? ownerStaffService.list() : Promise.resolve([])),
+    [restaurantId]
+  );
+  const readiness = ownerReadinessSummary({ items: menuItems || [], tables: tables || [], staff: staffMembers || [] });
+  const statusCounts = orderStatusCounts(activeOrders || []);
+  const currencyCode = restaurant?.currencyCode || 'LKR';
+
+  if (analyticsLoading) {
+    return <LoadingBlock label="Loading owner workspace..." />;
+  }
+
   return (
     <div className="space-y-6">
-      <PageHeader title="Owner Dashboard" description="Sales, table activity, and top-performing menu items." />
+      <OwnerPageHeader
+        title="Owner Overview"
+        description="A compact operating view for revenue, live orders, menu readiness, table QR coverage, and staff access."
+        action={<Link to="/owner/orders" className="rounded-2xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-slate-950">View orders</Link>}
+      />
+      {analyticsError ? <OwnerAlert title="Analytics unavailable">{analyticsError}</OwnerAlert> : null}
+      {!analyticsHasData(analytics) && !analyticsError ? <OwnerAlert title="No analytics yet">Tapro will show revenue, order, and item-performance analytics after orders are placed.</OwnerAlert> : null}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {(metrics || []).map((metric) => <StatCard key={metric.label} {...metric} />)}
+        <OwnerMetricCard label="Today's revenue" value={formatCurrency(analytics?.revenue.today || 0, currencyCode)} helper="Backend owner analytics, excluding cancelled order revenue." tone="emerald" />
+        <OwnerMetricCard label="Orders today" value={analytics?.orders.today || 0} helper="Orders created today from owner analytics." tone="blue" />
+        <OwnerMetricCard label="Active orders" value={activeOrders?.length || 0} helper="PENDING, ACCEPTED, PREPARING, and READY tickets." tone="amber" />
+        <OwnerMetricCard label="Average order" value={formatCurrency(analytics?.averageOrderValue || 0, currencyCode)} helper="Backend average over non-cancelled orders." tone="rose" />
+      </div>
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card className="p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Operational queue</h2>
+              <p className="text-sm text-slate-500">Live orders that need owner or kitchen attention.</p>
+            </div>
+            <Link to="/owner/orders" className="text-sm font-semibold text-emerald-700">Open orders</Link>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-4">
+            {(['PENDING', 'ACCEPTED', 'PREPARING', 'READY'] as const).map((status) => (
+              <div key={status} className="rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{status}</p>
+                <p className="mt-2 text-2xl font-semibold">{statusCounts[status]}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 space-y-2">
+            {(activeOrders || []).slice(0, 5).map((order) => (
+              <div key={order.id} className="flex flex-col gap-2 rounded-2xl bg-slate-50 p-3 text-sm dark:bg-slate-800/60 sm:flex-row sm:items-center sm:justify-between">
+                <span className="font-semibold">#{order.id} · Table {order.tableNumber}</span>
+                <span className="text-slate-500">{formatDateTime(order.orderTime)} · {formatCurrency(order.totalAmount, order.restaurantCurrencyCode || currencyCode)}</span>
+                <StatusBadge value={order.status} />
+              </div>
+            ))}
+            {activeOrders?.length === 0 ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800/60">No active orders right now.</p> : null}
+          </div>
+        </Card>
+        <Card className="p-4">
+          <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Restaurant readiness</h2>
+          <p className="mt-1 text-sm text-slate-500">Based on owner-scoped menu, table, and staff records.</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <OwnerMetricCard label="Available menu items" value={`${readiness.availableMenuItems}/${readiness.totalMenuItems}`} helper={`${readiness.hiddenMenuItems} hidden from customers.`} tone="emerald" />
+            <OwnerMetricCard label="QR-ready tables" value={`${readiness.qrReadyTables}/${tables?.length || 0}`} helper={`${readiness.activeTables} active tables.`} tone="blue" />
+            <OwnerMetricCard label="Enabled staff" value={`${readiness.enabledStaffCount}/${readiness.staffCount}`} helper="Owner-managed STAFF and KITCHEN users." tone="amber" />
+            <OwnerMetricCard label="Restaurant status" value={restaurant?.status || 'ACTIVE'} helper="Super-admin controlled account status." tone={restaurant?.status === 'SUSPENDED' ? 'rose' : 'slate'} />
+          </div>
+        </Card>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <OwnerQuickAction to="/owner/menu" label="Add menu item" description="Maintain prices, images, and availability." />
+        <OwnerQuickAction to="/owner/categories" label="Create category" description="Structure the public menu." />
+        <OwnerQuickAction to="/owner/tables" label="Add table" description="Prepare table QR links." />
+        <OwnerQuickAction to="/owner/staff" label="Invite staff" description="Add STAFF or KITCHEN users." />
+        <OwnerQuickAction to="/owner/reports" label="Review reports" description="View backend analytics." />
       </div>
     </div>
   );
@@ -198,7 +283,15 @@ export const StaffManagementPage = () => {
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
   const [emailError, setEmailError] = useState('');
   const [submitError, setSubmitError] = useState('');
+  const [staffSearch, setStaffSearch] = useState('');
+  const [staffRoleFilter, setStaffRoleFilter] = useState<OwnerInvitationRole | 'ALL'>('ALL');
+  const [staffStatusFilter, setStaffStatusFilter] = useState<'ALL' | 'ENABLED' | 'DISABLED'>('ALL');
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const filteredStaffMembers = useMemo(() => filterStaffForOwner(staffMembers || [], {
+    search: staffSearch,
+    role: staffRoleFilter,
+    status: staffStatusFilter,
+  }), [staffMembers, staffRoleFilter, staffSearch, staffStatusFilter]);
 
   const resetInviteForm = () => {
     setForm({ email: '', role: 'STAFF' });
@@ -265,11 +358,27 @@ export const StaffManagementPage = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <OwnerPageHeader
         title="Staff Management"
         description="Invite STAFF and KITCHEN users, review active accounts, and control access for your restaurant."
         action={<Button onClick={() => { resetInviteForm(); setInviteModalOpen(true); }}>Invite User</Button>}
       />
+      <OwnerFilterBar
+        resultLabel={`${filteredStaffMembers.length} of ${staffMembers?.length || 0} users`}
+        onReset={() => { setStaffSearch(''); setStaffRoleFilter('ALL'); setStaffStatusFilter('ALL'); }}
+      >
+        <Input label="Search staff" value={staffSearch} onChange={(event) => setStaffSearch(event.target.value)} placeholder="Name, email, or role" />
+        <Select label="Role" value={staffRoleFilter} onChange={(event) => setStaffRoleFilter(event.target.value as OwnerInvitationRole | 'ALL')}>
+          <option value="ALL">All roles</option>
+          <option value="STAFF">Staff</option>
+          <option value="KITCHEN">Kitchen</option>
+        </Select>
+        <Select label="Status" value={staffStatusFilter} onChange={(event) => setStaffStatusFilter(event.target.value as typeof staffStatusFilter)}>
+          <option value="ALL">All statuses</option>
+          <option value="ENABLED">Enabled</option>
+          <option value="DISABLED">Disabled</option>
+        </Select>
+      </OwnerFilterBar>
       <Card>
         <DataTable
           columns={[
@@ -337,7 +446,7 @@ export const StaffManagementPage = () => {
               ),
             },
           ]}
-          rows={staffMembers || []}
+          rows={filteredStaffMembers}
         />
       </Card>
       {inviteModalOpen ? (
@@ -402,6 +511,14 @@ export const TableManagementPage = () => {
   const [editError, setEditError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [tableSearch, setTableSearch] = useState('');
+  const [tableStatusFilter, setTableStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+  const [tableQrFilter, setTableQrFilter] = useState<'ALL' | 'READY' | 'MISSING'>('ALL');
+  const filteredTables = useMemo(() => filterTablesForOwner(tables || [], {
+    search: tableSearch,
+    status: tableStatusFilter,
+    qr: tableQrFilter,
+  }), [tableQrFilter, tableSearch, tableStatusFilter, tables]);
 
   const downloadQr = async (imageUrl: string, tableLabel: string) => {
     const response = await fetch(imageUrl);
@@ -462,7 +579,23 @@ export const TableManagementPage = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Table Management" description="Create tables, maintain permanent QR links, and download or print QR assets without regenerating menu routes." />
+      <OwnerPageHeader title="Table Management" description="Create tables, maintain permanent QR links, and download or print QR assets without regenerating menu routes." />
+      <OwnerFilterBar
+        resultLabel={`${filteredTables.length} of ${tables?.length || 0} tables`}
+        onReset={() => { setTableSearch(''); setTableStatusFilter('ALL'); setTableQrFilter('ALL'); }}
+      >
+        <Input label="Search tables" value={tableSearch} onChange={(event) => setTableSearch(event.target.value)} placeholder="Table number" />
+        <Select label="Table status" value={tableStatusFilter} onChange={(event) => setTableStatusFilter(event.target.value as typeof tableStatusFilter)}>
+          <option value="ALL">All statuses</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </Select>
+        <Select label="QR readiness" value={tableQrFilter} onChange={(event) => setTableQrFilter(event.target.value as typeof tableQrFilter)}>
+          <option value="ALL">All QR states</option>
+          <option value="READY">QR ready</option>
+          <option value="MISSING">Missing QR</option>
+        </Select>
+      </OwnerFilterBar>
       <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
         <Card>
           <form
@@ -491,7 +624,7 @@ export const TableManagementPage = () => {
           </form>
         </Card>
         <Card>
-          <DataTable
+          <DataTable<RestaurantTable>
             columns={[
               { key: 'table', label: 'Table', render: (row) => <div><div className="font-semibold">{row.tableNumber}</div><div className="text-xs text-slate-400">{row.qrCodeUrl}</div></div> },
               { key: 'status', label: 'Status', render: (row) => <StatusBadge value={row.active ? 'ACTIVE' : 'INACTIVE'} /> },
@@ -511,7 +644,7 @@ export const TableManagementPage = () => {
                 ),
               },
             ]}
-            rows={tables || []}
+            rows={filteredTables}
           />
         </Card>
       </div>
@@ -684,6 +817,18 @@ export const MenuItemsManagementPage = () => {
   const [editError, setEditError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [menuSearch, setMenuSearch] = useState('');
+  const [menuStatusFilter, setMenuStatusFilter] = useState<MenuItem['status'] | 'ALL'>('ALL');
+  const [menuCategoryFilter, setMenuCategoryFilter] = useState<number | 'ALL'>('ALL');
+  const [menuFeaturedFilter, setMenuFeaturedFilter] = useState<'ALL' | 'FEATURED' | 'STANDARD'>('ALL');
+  const [menuImageFilter, setMenuImageFilter] = useState<'ALL' | 'WITH_IMAGE' | 'MISSING_IMAGE'>('ALL');
+  const filteredMenuItems = useMemo<MenuItem[]>(() => filterMenuItemsForOwner(items || [], {
+    search: menuSearch,
+    status: menuStatusFilter,
+    categoryId: menuCategoryFilter,
+    featured: menuFeaturedFilter,
+    image: menuImageFilter,
+  }), [items, menuCategoryFilter, menuFeaturedFilter, menuImageFilter, menuSearch, menuStatusFilter]);
 
   useEffect(() => {
     if (!form.categoryId && categories?.length) {
@@ -786,7 +931,33 @@ export const MenuItemsManagementPage = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Menu Management" description="Create, edit, hide, feature, and price menu items for customers." />
+      <OwnerPageHeader title="Menu Management" description="Create, edit, hide, feature, and price menu items for customers." />
+      <OwnerFilterBar
+        resultLabel={`${filteredMenuItems.length} of ${items?.length || 0} items`}
+        onReset={() => { setMenuSearch(''); setMenuStatusFilter('ALL'); setMenuCategoryFilter('ALL'); setMenuFeaturedFilter('ALL'); setMenuImageFilter('ALL'); }}
+      >
+        <Input label="Search menu" value={menuSearch} onChange={(event) => setMenuSearch(event.target.value)} placeholder="Name, description, category" />
+        <Select label="Status" value={menuStatusFilter} onChange={(event) => setMenuStatusFilter(event.target.value as MenuItem['status'] | 'ALL')}>
+          <option value="ALL">All statuses</option>
+          <option value="AVAILABLE">Available</option>
+          <option value="OUT_OF_STOCK">Out of stock</option>
+          <option value="HIDDEN">Hidden</option>
+        </Select>
+        <Select label="Category" value={String(menuCategoryFilter)} onChange={(event) => setMenuCategoryFilter(event.target.value === 'ALL' ? 'ALL' : Number(event.target.value))}>
+          <option value="ALL">All categories</option>
+          {(categories || []).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+        </Select>
+        <Select label="Featured" value={menuFeaturedFilter} onChange={(event) => setMenuFeaturedFilter(event.target.value as typeof menuFeaturedFilter)}>
+          <option value="ALL">Featured + standard</option>
+          <option value="FEATURED">Featured only</option>
+          <option value="STANDARD">Standard only</option>
+        </Select>
+        <Select label="Image" value={menuImageFilter} onChange={(event) => setMenuImageFilter(event.target.value as typeof menuImageFilter)}>
+          <option value="ALL">All images</option>
+          <option value="WITH_IMAGE">Has image</option>
+          <option value="MISSING_IMAGE">Missing image</option>
+        </Select>
+      </OwnerFilterBar>
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <Card>
           <form
@@ -855,7 +1026,7 @@ export const MenuItemsManagementPage = () => {
           </form>
         </Card>
         <Card>
-          <DataTable
+          <DataTable<MenuItem>
             columns={[
               {
                 key: 'item',
@@ -895,7 +1066,7 @@ export const MenuItemsManagementPage = () => {
                 ),
               },
             ]}
-            rows={items || []}
+            rows={filteredMenuItems}
           />
         </Card>
       </div>
@@ -1043,7 +1214,7 @@ export const OwnerOrdersPage = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Orders" description="Manage live service orders and review archived order history." />
+      <OwnerPageHeader title="Orders" description="Manage live service orders and review archived order history using the backend order lifecycle." />
       <Card>
         <div className="flex flex-wrap gap-3">
           <Button variant={tab === 'ACTIVE' ? 'primary' : 'ghost'} onClick={() => setTab('ACTIVE')}>Active Orders</Button>
@@ -1051,8 +1222,10 @@ export const OwnerOrdersPage = () => {
         </div>
       </Card>
       {tab === 'PAST' ? (
-        <Card>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <OwnerFilterBar
+          resultLabel={`${orders?.length || 0} orders`}
+          onReset={() => { setPreset('ALL_TIME'); setStatusFilter('ALL'); setTableFilter(''); setCustomFrom(''); setCustomTo(''); }}
+        >
             <Select label="Date Range" value={preset} onChange={(event) => setPreset(event.target.value as typeof preset)}>
               <option value="ALL_TIME">All time</option>
               <option value="TODAY">Today</option>
@@ -1068,8 +1241,7 @@ export const OwnerOrdersPage = () => {
             <Input label="Table Number" value={tableFilter} onChange={(event) => setTableFilter(event.target.value)} placeholder="T1" />
             <Input label="From" type="date" value={customFrom} disabled={preset !== 'CUSTOM'} onChange={(event) => setCustomFrom(event.target.value)} />
             <Input label="To" type="date" value={customTo} disabled={preset !== 'CUSTOM'} onChange={(event) => setCustomTo(event.target.value)} />
-          </div>
-        </Card>
+        </OwnerFilterBar>
       ) : null}
       {loading ? <LoadingBlock label={`Loading ${tab === 'ACTIVE' ? 'active' : 'past'} orders...`} /> : null}
       {error ? <Card><p className="text-sm text-rose-600">{error}</p></Card> : null}
@@ -1092,7 +1264,7 @@ export const OwnerOrdersPage = () => {
                       {row.status === 'PENDING' ? <Button variant="ghost" onClick={async () => { await orderService.ownerUpdateStatus(row.id, 'PREPARING'); setRefreshKey((value) => value + 1); toast.success('Order moved to preparing'); }}>Start Preparing</Button> : null}
                       {row.status === 'PREPARING' ? <Button variant="ghost" onClick={async () => { await orderService.ownerUpdateStatus(row.id, 'READY'); setRefreshKey((value) => value + 1); toast.success('Order marked ready'); }}>Mark Ready</Button> : null}
                       {row.status === 'READY' ? <Button variant="ghost" onClick={async () => { await orderService.ownerUpdateStatus(row.id, 'COMPLETED'); setRefreshKey((value) => value + 1); toast.success('Order marked completed'); }}>Mark Completed</Button> : null}
-                      <Button variant="danger" onClick={async () => { await orderService.updateStatus(row.id, 'CANCELLED'); setRefreshKey((value) => value + 1); toast.success('Order rejected'); }}>Reject</Button>
+                      <span className="text-xs text-slate-500">Cancellation is not exposed by the owner status endpoint.</span>
                     </div>
                   ),
                 }]
@@ -1123,7 +1295,7 @@ export const OwnerReportsPage = () => {
   if (error || !analytics) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Restaurant Reports" description="Real-time revenue, order volume, and item performance for your restaurant." />
+      <OwnerPageHeader title="Restaurant Reports" description="Real-time revenue, order volume, and item performance for your restaurant." />
         <Card><p className="text-sm text-rose-600">{error || 'Unable to load analytics.'}</p></Card>
       </div>
     );
@@ -1131,12 +1303,13 @@ export const OwnerReportsPage = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Restaurant Reports" description="Real backend revenue, order volume, item performance, and ordering hour trends." />
+      <OwnerPageHeader title="Restaurant Reports" description="Real backend revenue, order volume, item performance, and ordering hour trends." />
+      <OwnerAlert title="Report definitions">Revenue and average order value come from the owner analytics endpoint and exclude cancelled orders where the backend excludes them. Export is not shown because no owner export endpoint exists.</OwnerAlert>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Revenue Today" value={formatCurrency(analytics.revenue.today, currencyCode)} helper="Revenue booked since midnight" tone="emerald" />
-        <StatCard label="Revenue This Week" value={formatCurrency(analytics.revenue.week, currencyCode)} helper="Revenue booked since Monday" tone="blue" />
-        <StatCard label="Revenue This Month" value={formatCurrency(analytics.revenue.month, currencyCode)} helper="Revenue booked this month" tone="amber" />
-        <StatCard label="Average Order Value" value={formatCurrency(analytics.averageOrderValue, currencyCode)} helper="Average non-cancelled order total" tone="rose" />
+        <OwnerMetricCard label="Revenue Today" value={formatCurrency(analytics.revenue.today, currencyCode)} helper="Revenue booked since midnight" tone="emerald" />
+        <OwnerMetricCard label="Revenue This Week" value={formatCurrency(analytics.revenue.week, currencyCode)} helper="Revenue booked since Monday" tone="blue" />
+        <OwnerMetricCard label="Revenue This Month" value={formatCurrency(analytics.revenue.month, currencyCode)} helper="Revenue booked this month" tone="amber" />
+        <OwnerMetricCard label="Average Order Value" value={formatCurrency(analytics.averageOrderValue, currencyCode)} helper="Average non-cancelled order total" tone="rose" />
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
