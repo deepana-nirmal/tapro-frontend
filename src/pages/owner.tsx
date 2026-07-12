@@ -374,7 +374,7 @@ export const StaffManagementPage = () => {
               </Select>
               <p className="text-sm text-slate-600 dark:text-slate-300">This invitation is locked to your assigned restaurant. Owners can invite only STAFF and KITCHEN users.</p>
               {submitError ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{submitError}</p> : null}
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button type="submit" disabled={inviteLoading}>{inviteLoading ? 'Sending...' : 'Send invitation'}</Button>
                 <Button type="button" variant="ghost" onClick={() => setInviteModalOpen(false)}>Cancel</Button>
               </div>
@@ -545,7 +545,7 @@ export const TableManagementPage = () => {
               <Input label="Table Number" value={editTableNumber} onChange={(event) => setEditTableNumber(event.target.value)} required />
               <p className="text-sm text-slate-600 dark:text-slate-300">Permanent QR links are preserved. Updating the table number will not regenerate the QR route.</p>
               {editError ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{editError}</p> : null}
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button type="submit" disabled={editLoading}>{editLoading ? 'Saving...' : 'Save changes'}</Button>
                 <Button type="button" variant="ghost" onClick={() => setEditingTable(null)}>Cancel</Button>
               </div>
@@ -963,7 +963,7 @@ export const MenuItemsManagementPage = () => {
                 </Select>
               ) : null}
               {editError ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{editError}</p> : null}
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button type="submit" disabled={editLoading}>{editLoading ? 'Saving...' : 'Save changes'}</Button>
                 <Button type="button" variant="ghost" onClick={() => setEditingItemId(null)}>Cancel</Button>
               </div>
@@ -1088,7 +1088,7 @@ export const OwnerOrdersPage = () => {
                   key: 'actions',
                   label: 'Actions',
                   render: (row: any) => (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {row.status === 'PENDING' ? <Button variant="ghost" onClick={async () => { await orderService.ownerUpdateStatus(row.id, 'PREPARING'); setRefreshKey((value) => value + 1); toast.success('Order moved to preparing'); }}>Start Preparing</Button> : null}
                       {row.status === 'PREPARING' ? <Button variant="ghost" onClick={async () => { await orderService.ownerUpdateStatus(row.id, 'READY'); setRefreshKey((value) => value + 1); toast.success('Order marked ready'); }}>Mark Ready</Button> : null}
                       {row.status === 'READY' ? <Button variant="ghost" onClick={async () => { await orderService.ownerUpdateStatus(row.id, 'COMPLETED'); setRefreshKey((value) => value + 1); toast.success('Order marked completed'); }}>Mark Completed</Button> : null}
