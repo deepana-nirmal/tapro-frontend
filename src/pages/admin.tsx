@@ -6,10 +6,12 @@ import { CategoryWorkspace } from '../components/category/CategoryWorkspace';
 import { ImageWithFallback, initialsFromName } from '../components/shared/ImageWithFallback';
 import { useAsyncResource } from '../hooks';
 import { Button, Card, DataTable, Input, LoadingBlock, OrderItemsList, PageHeader, Select, StatCard, StatusBadge, Textarea } from '../components/ui';
+import { OwnerFilterBar, OwnerMetricCard } from '../components/owner/OwnerWorkspace';
 import { formatCurrency, formatDateTime } from '../utils/format';
 import { validateImageFile } from '../utils/upload';
 import { AdminInvitationsPage } from './invitations';
 import { BackendRole, CurrencyCode, Restaurant, RestaurantFormValues, SuperAdminUser, SuperAdminUserRequest, UsersByRestaurantGroup } from '../types';
+import { filterRestaurantsForSuperAdmin, summarizePlatform } from '../utils/superAdminWorkspace';
 
 const manageableRoles: Array<{ value: Extract<BackendRole, 'OWNER' | 'STAFF' | 'KITCHEN'>; label: string }> = [
   { value: 'OWNER', label: 'Owner' },
@@ -36,6 +38,9 @@ const currencyOptions: Array<{ value: CurrencyCode; label: string }> = [
 export const SuperAdminDashboardPage = () => {
   const { data: metrics, loading, error } = useAsyncResource(() => dashboardService.superAdminMetrics(), []);
   const { data: activities, loading: activitiesLoading, error: activitiesError } = useAsyncResource(() => dashboardService.activities(), []);
+  const { data: restaurants } = useAsyncResource(() => restaurantService.listAdmin(), []);
+  const { data: users } = useAsyncResource(() => superAdminUserService.list(), []);
+  const platformSummary = summarizePlatform(restaurants || [], users || []);
 
   if (loading) {
     return <div className="p-8">Loading dashboard...</div>;
@@ -62,6 +67,12 @@ export const SuperAdminDashboardPage = () => {
   return (
     <div className="space-y-6">
       <PageHeader title="Super Admin Dashboard" description="Platform-wide revenue, tenant health, and recent activity." />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <OwnerMetricCard label="Restaurants" value={`${platformSummary.activeRestaurants}/${platformSummary.totalRestaurants}`} helper={`${platformSummary.suspendedRestaurants} suspended tenants.`} tone="emerald" />
+        <OwnerMetricCard label="Active orders" value={platformSummary.activeOrders} helper="Sum of restaurant active-order counts." tone="amber" />
+        <OwnerMetricCard label="Users" value={platformSummary.enabledUsers} helper={`${platformSummary.disabledUsers} disabled accounts.`} tone="blue" />
+        <OwnerMetricCard label="Today revenue" value={formatCurrency(platformSummary.todayRevenue, 'LKR')} helper="Sum of restaurant revenue snapshots when provided." tone="rose" />
+      </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => <StatCard key={metric.label} {...metric} />)}
       </div>
@@ -108,6 +119,14 @@ export const RestaurantsManagementPage = () => {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+  const [restaurantSearch, setRestaurantSearch] = useState('');
+  const [restaurantStatusFilter, setRestaurantStatusFilter] = useState<'ALL' | 'ACTIVE' | 'SUSPENDED' | 'INACTIVE'>('ALL');
+  const [restaurantCurrencyFilter, setRestaurantCurrencyFilter] = useState<'ALL' | CurrencyCode>('ALL');
+  const filteredRestaurants = useMemo(() => filterRestaurantsForSuperAdmin(restaurants || [], {
+    search: restaurantSearch,
+    status: restaurantStatusFilter,
+    currency: restaurantCurrencyFilter,
+  }), [restaurantCurrencyFilter, restaurantSearch, restaurantStatusFilter, restaurants]);
 
   const reloadRestaurants = async () => {
     setData(await restaurantService.listAdmin());
@@ -159,6 +178,22 @@ export const RestaurantsManagementPage = () => {
   return (
     <div className="space-y-6">
       <PageHeader title="Restaurants" description="Create restaurants, review tenant health, and open a restaurant-specific workspace." />
+      <OwnerFilterBar
+        resultLabel={`${filteredRestaurants.length} of ${restaurants?.length || 0} restaurants`}
+        onReset={() => { setRestaurantSearch(''); setRestaurantStatusFilter('ALL'); setRestaurantCurrencyFilter('ALL'); }}
+      >
+        <Input label="Search restaurants" value={restaurantSearch} onChange={(event) => setRestaurantSearch(event.target.value)} placeholder="Name, email, phone, address" />
+        <Select label="Status" value={restaurantStatusFilter} onChange={(event) => setRestaurantStatusFilter(event.target.value as typeof restaurantStatusFilter)}>
+          <option value="ALL">All statuses</option>
+          <option value="ACTIVE">Active</option>
+          <option value="SUSPENDED">Suspended</option>
+          <option value="INACTIVE">Inactive</option>
+        </Select>
+        <Select label="Currency" value={restaurantCurrencyFilter} onChange={(event) => setRestaurantCurrencyFilter(event.target.value as 'ALL' | CurrencyCode)}>
+          <option value="ALL">All currencies</option>
+          {currencyOptions.map((option) => <option key={option.value} value={option.value}>{option.value}</option>)}
+        </Select>
+      </OwnerFilterBar>
       {!restaurants?.length ? (
         <Card><p className="text-sm text-slate-500 dark:text-slate-300">No restaurants found. Create your first restaurant.</p></Card>
       ) : null}
@@ -178,7 +213,7 @@ export const RestaurantsManagementPage = () => {
           </form>
         </Card>
         <div className="grid gap-4 md:grid-cols-2">
-          {(restaurants || []).map((restaurant) => (
+          {filteredRestaurants.map((restaurant) => (
             <Card key={restaurant.id} className="rounded-[28px]">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
