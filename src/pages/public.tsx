@@ -1,4 +1,4 @@
-import { ArrowRight, Building2, ChartNoAxesCombined, Check, CirclePlay, Clock3, QrCode, ScanLine, Sparkles, Star, Store, Users, UtensilsCrossed } from 'lucide-react';
+import { ArrowRight, Building2, ChartNoAxesCombined, Check, CirclePlay, Clock3, Menu, QrCode, ScanLine, Sparkles, Star, Store, Users, UtensilsCrossed, X } from 'lucide-react';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -56,23 +56,29 @@ const resolveTableLabel = (tableNumber?: string | null) => {
 export const LandingPage = () => {
   const navigate = useNavigate();
   const [ctaEmail, setCtaEmail] = useState('');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(6,78,85,0.12),transparent_28%),radial-gradient(circle_at_top_right,rgba(249,115,22,0.12),transparent_26%),linear-gradient(180deg,#fffefb_0%,#f6f7f3_100%)] px-4 py-4 text-slate-950">
+    <div className="min-h-screen min-h-[100dvh] bg-[radial-gradient(circle_at_top_left,rgba(6,78,85,0.12),transparent_28%),radial-gradient(circle_at_top_right,rgba(249,115,22,0.12),transparent_26%),linear-gradient(180deg,#fffefb_0%,#f6f7f3_100%)] px-3 py-3 text-slate-950 sm:px-4 sm:py-4">
       <div className="mx-auto max-w-[1560px] rounded-[40px] border border-white/70 bg-white/88 p-4 shadow-[0_45px_120px_rgba(15,23,42,0.12)] backdrop-blur md:p-6">
-        <header className="landing-navbar flex flex-col gap-5 rounded-[30px] border border-slate-200/80 bg-white md:flex-row md:items-center md:justify-between">
-          <div className="logo-wrapper landing-brand">
-            <TaproLogo size="md" className="tapro-logo-navbar" />
+        <header className="landing-navbar rounded-[30px] border border-slate-200/80 bg-white md:flex md:items-center md:justify-between md:gap-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="logo-wrapper landing-brand">
+              <TaproLogo size="md" className="tapro-logo-navbar" />
+            </div>
+            <button type="button" aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={mobileNavOpen} aria-controls="landing-navigation" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-700 md:hidden" onClick={() => setMobileNavOpen((open) => !open)}>
+              {mobileNavOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
-          <nav className="flex flex-wrap items-center gap-3 text-sm text-slate-600 md:gap-6">
-            <a href="#how-it-works" className="transition hover:text-slate-950">How It Works</a>
-            <a href="#features" className="transition hover:text-slate-950">Features</a>
-            <a href="#operators" className="transition hover:text-slate-950">Teams</a>
-            <a href="#contact" className="transition hover:text-slate-950">Contact</a>
-            <Link to="/login" className="nav-login">
+          <nav id="landing-navigation" className={`${mobileNavOpen ? 'flex' : 'hidden'} mt-4 flex-col gap-2 text-sm text-slate-600 md:mt-0 md:flex md:flex-row md:flex-wrap md:items-center md:gap-6`}>
+            <a href="#how-it-works" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-2 py-3 transition hover:bg-slate-50 hover:text-slate-950">How It Works</a>
+            <a href="#features" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-2 py-3 transition hover:bg-slate-50 hover:text-slate-950">Features</a>
+            <a href="#operators" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-2 py-3 transition hover:bg-slate-50 hover:text-slate-950">Teams</a>
+            <a href="#contact" onClick={() => setMobileNavOpen(false)} className="rounded-xl px-2 py-3 transition hover:bg-slate-50 hover:text-slate-950">Contact</a>
+            <Link to="/login" className="nav-login w-full md:w-auto">
               Login
             </Link>
-            <Link to="/register" className="nav-cta">
+            <Link to="/register" className="nav-cta w-full md:w-auto">
               Get Started
             </Link>
           </nav>
@@ -106,7 +112,7 @@ export const LandingPage = () => {
               <div className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] lg:items-end">
                 <div className="max-w-3xl pt-4 md:pt-10 lg:pt-16">
                   <p className="text-[11px] uppercase tracking-[0.36em] text-[#F7C15B]">Restaurant SaaS for modern service</p>
-                  <h1 className="mt-5 text-5xl font-semibold leading-[0.92] tracking-[-0.06em] text-white sm:text-6xl lg:text-7xl">
+                  <h1 className="mt-5 text-[clamp(2.5rem,12vw,4.5rem)] font-semibold leading-[0.96] tracking-[-0.06em] text-white">
                     QR ordering made simple for modern restaurants
                   </h1>
                   <p className="mt-6 max-w-2xl text-base leading-7 text-white/88 md:text-lg">
@@ -153,7 +159,7 @@ export const LandingPage = () => {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                   <div className="rounded-[28px] border border-white/12 bg-[#082a2f]/74 p-5 text-white shadow-[0_24px_60px_rgba(2,20,23,0.18)]">
                     <p className="text-[11px] uppercase tracking-[0.3em] text-white/66">Trusted service layer</p>
-                    <div className="mt-8 grid grid-cols-3 gap-3">
+                    <div className="mt-8 grid grid-cols-1 gap-3 min-[480px]:grid-cols-3">
                       {[
                         ['24/7', 'Live menu access'],
                         ['4 roles', 'Owner to kitchen'],
@@ -512,12 +518,12 @@ export const RestaurantMenuPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#ffe7c2_0%,rgba(255,231,194,0.38)_18%,transparent_42%),linear-gradient(180deg,#fff6ea_0%,#fff0df_28%,#fffaf3_100%)] px-4 py-4 text-slate-950">
+    <div className="min-h-screen min-h-[100dvh] bg-[radial-gradient(circle_at_top,#ffe7c2_0%,rgba(255,231,194,0.38)_18%,transparent_42%),linear-gradient(180deg,#fff6ea_0%,#fff0df_28%,#fffaf3_100%)] px-3 py-3 text-slate-950 sm:px-4 sm:py-4">
       <div className="mx-auto max-w-6xl pb-28">
         <section className="relative overflow-hidden rounded-[34px] border border-amber-200/70 bg-[linear-gradient(135deg,rgba(255,251,245,0.96),rgba(255,243,224,0.92))] p-4 shadow-[0_24px_80px_rgba(148,82,24,0.12)] md:p-6">
           <div className="absolute inset-x-0 top-0 h-32 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.28),transparent_55%)]" />
-          <div className="relative flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-4">
+          <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex min-w-0 flex-col gap-4 min-[420px]:flex-row min-[420px]:items-center">
               <div className="rounded-[28px] border border-white/80 bg-white/90 p-1 shadow-lg shadow-amber-950/5">
                 <ImageWithFallback
                   src={restaurant?.logoUrl}
@@ -532,7 +538,7 @@ export const RestaurantMenuPage = () => {
                   <TaproLogo variant="mark" withWordmark={false} imageClassName="h-10 w-10 rounded-2xl" />
                   <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-700">Tapro Table Ordering</p>
                 </div>
-                <h1 className="mt-2 truncate text-3xl font-semibold tracking-[-0.04em] text-slate-950 md:text-4xl">{restaurantName}</h1>
+                <h1 className="mt-2 text-[clamp(1.75rem,9vw,2.25rem)] font-semibold tracking-[-0.04em] text-slate-950">{restaurantName}</h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 md:text-base">{restaurantDescription}</p>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <span className="inline-flex rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white">
@@ -628,7 +634,7 @@ export const RestaurantMenuPage = () => {
                   </div>
                   <StatusBadge value={item.status === 'AVAILABLE' ? 'AVAILABLE' : 'UNAVAILABLE'} />
                 </div>
-                <div className="mt-6 flex items-center justify-between gap-3">
+                <div className="mt-6 flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
                   <div>
                     <span className="text-lg font-semibold text-slate-950">{formatCurrency(item.price, restaurant?.currencyCode || item.restaurantCurrencyCode || 'LKR')}</span>
                     <p className="mt-1 text-xs text-slate-500">
@@ -637,7 +643,7 @@ export const RestaurantMenuPage = () => {
                   </div>
                   <Button
                     disabled={item.status !== 'AVAILABLE'}
-                    className="min-w-[112px]"
+                    className="w-full min-[400px]:w-auto min-[400px]:min-w-[112px]"
                     onClick={() => {
                       dispatch(addToCart({ menuItemId: item.id, name: item.name, price: item.price }));
                       toast.success(`${item.name} added to cart`);
@@ -661,8 +667,8 @@ export const RestaurantMenuPage = () => {
         )}
       </div>
       {cartCount ? (
-        <div className="fixed inset-x-4 bottom-4 z-30">
-          <Link to="/checkout" className="flex items-center justify-between rounded-3xl bg-slate-950 px-5 py-4 text-white shadow-2xl shadow-slate-950/20">
+        <div className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 sm:inset-x-4">
+          <Link to="/checkout" className="flex items-center justify-between gap-3 rounded-3xl bg-slate-950 px-4 py-3 text-white shadow-2xl shadow-slate-950/20 sm:px-5 sm:py-4">
             <div>
               <p className="text-sm font-semibold">{cartCount} item{cartCount > 1 ? 's' : ''} in cart</p>
               <p className="text-xs text-slate-300">Ready to place your order</p>
@@ -724,7 +730,7 @@ export const CheckoutPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#fff8ef_0%,#fff4e6_35%,#fffaf4_100%)] px-4 py-8 text-slate-950">
+    <div className="min-h-screen min-h-[100dvh] bg-[linear-gradient(180deg,#fff8ef_0%,#fff4e6_35%,#fffaf4_100%)] px-3 py-5 text-slate-950 sm:px-4 sm:py-8">
       <div className="mx-auto max-w-4xl space-y-6">
         <PageHeader title="Checkout" description="Review order summary and place the order." />
         {!cart.length ? (
@@ -754,7 +760,7 @@ export const CheckoutPage = () => {
                   </div>
                 ))}
               </div>
-              <div className="mt-6 flex items-center justify-between border-t border-slate-200 pt-6 dark:border-slate-800">
+              <div className="mt-6 flex flex-col gap-4 border-t border-slate-200 pt-6 dark:border-slate-800 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
                 <p className="text-lg font-semibold text-slate-950 dark:text-white">Total: {formatCurrency(total, restaurant?.currencyCode || 'LKR')}</p>
                 <Button onClick={submitOrder}>Place order</Button>
               </div>
@@ -812,7 +818,7 @@ export const TrackOrderPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#fff8ef_0%,#fff4e6_35%,#fffaf4_100%)] px-4 py-8 text-slate-950">
+    <div className="min-h-screen min-h-[100dvh] bg-[linear-gradient(180deg,#fff8ef_0%,#fff4e6_35%,#fffaf4_100%)] px-3 py-5 text-slate-950 sm:px-4 sm:py-8">
       <div className="mx-auto max-w-3xl space-y-6">
         <PageHeader title="Your order is being prepared" description="Track each stage from received to completed." />
         <Card>
@@ -829,7 +835,7 @@ export const TrackOrderPage = () => {
               <p className="text-sm text-slate-500">We are preparing your food fresh for your table.</p>
             </div>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-300">Placed {formatDateTime(order.orderTime)}</p>
               <h2 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">Table {order.tableNumber}</h2>

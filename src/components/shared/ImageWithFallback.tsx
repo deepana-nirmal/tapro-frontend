@@ -26,11 +26,11 @@ export const ImageWithFallback = ({
 
   if (!src || failed) {
     return (
-      <div className={classNames('flex items-center justify-center bg-slate-900 font-semibold text-white dark:bg-slate-100 dark:text-slate-950', fallbackClassName)}>
+      <div className={classNames('flex max-w-full items-center justify-center overflow-hidden bg-slate-900 font-semibold text-white dark:bg-slate-100 dark:text-slate-950', fallbackClassName)}>
         {fallback}
       </div>
     );
   }
 
-  return <img src={src} alt={alt} className={className} onError={() => setFailed(true)} />;
+  return <img src={src} alt={alt} className={classNames('max-w-full object-cover', className)} onError={() => setFailed(true)} />;
 };

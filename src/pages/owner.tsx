@@ -341,8 +341,8 @@ export const StaffManagementPage = () => {
         />
       </Card>
       {inviteModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
-          <Card className="w-full max-w-xl p-6">
+        <div role="dialog" aria-modal="true" aria-label="Invite user" className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/45 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Card className="my-auto max-h-[calc(100dvh-24px)] w-full max-w-xl overflow-y-auto p-4 sm:p-6">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Invite User</h2>
               <Button variant="ghost" onClick={() => setInviteModalOpen(false)}>Close</Button>
@@ -516,8 +516,8 @@ export const TableManagementPage = () => {
         </Card>
       </div>
       {editingTable ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
-          <Card className="w-full max-w-xl p-6">
+        <div role="dialog" aria-modal="true" aria-label="Edit table" className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/45 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Card className="my-auto max-h-[calc(100dvh-24px)] w-full max-w-xl overflow-y-auto p-4 sm:p-6">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Edit Table</h2>
               <Button variant="ghost" onClick={() => setEditingTable(null)}>Close</Button>
@@ -554,8 +554,8 @@ export const TableManagementPage = () => {
         </div>
       ) : null}
       {deleteTarget ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
-          <Card className="w-full max-w-lg p-6">
+        <div role="dialog" aria-modal="true" aria-label="Delete table" className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/45 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Card className="my-auto max-h-[calc(100dvh-24px)] w-full max-w-lg overflow-y-auto p-4 sm:p-6">
             <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Delete Table</h2>
             <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">This permanently removes the table record. Existing QR prints for this table will no longer open an active menu.</p>
             <div className="mt-6 flex gap-3">
@@ -690,6 +690,22 @@ export const MenuItemsManagementPage = () => {
       setForm((current) => ({ ...current, categoryId: categories[0].id }));
     }
   }, [categories, form.categoryId]);
+
+  useEffect(() => {
+    if (!editingItemId) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setEditingItemId(null);
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [editingItemId]);
 
   const resetCreateForm = () => {
     setForm({
@@ -884,13 +900,14 @@ export const MenuItemsManagementPage = () => {
         </Card>
       </div>
       {editingItemId ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
-          <Card className="w-full max-w-2xl p-6">
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Edit Menu Item</h2>
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/45 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Card className="my-auto max-h-[calc(100dvh-24px)] w-full max-w-2xl overflow-y-auto p-4 sm:p-6">
+            <div role="dialog" aria-modal="true" aria-labelledby="edit-menu-item-title">
+              <div className="flex items-center justify-between gap-4">
+              <h2 id="edit-menu-item-title" className="text-xl font-semibold text-slate-950 dark:text-white">Edit Menu Item</h2>
               <Button variant="ghost" onClick={() => setEditingItemId(null)}>Close</Button>
-            </div>
-            <form
+              </div>
+              <form
               className="mt-6 grid gap-4"
               onSubmit={async (event) => {
                 event.preventDefault();
@@ -950,13 +967,14 @@ export const MenuItemsManagementPage = () => {
                 <Button type="submit" disabled={editLoading}>{editLoading ? 'Saving...' : 'Save changes'}</Button>
                 <Button type="button" variant="ghost" onClick={() => setEditingItemId(null)}>Cancel</Button>
               </div>
-            </form>
+              </form>
+            </div>
           </Card>
         </div>
       ) : null}
       {deleteTarget ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
-          <Card className="w-full max-w-lg p-6">
+        <div role="dialog" aria-modal="true" aria-label="Delete menu item" className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/45 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Card className="my-auto max-h-[calc(100dvh-24px)] w-full max-w-lg overflow-y-auto p-4 sm:p-6">
             <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Delete Menu Item</h2>
             <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">This will permanently remove the menu item from management and customer menus.</p>
             <div className="mt-6 flex gap-3">
