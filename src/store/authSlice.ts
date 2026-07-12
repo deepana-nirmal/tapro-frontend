@@ -4,6 +4,7 @@ import { AuthResponse, LoginCredentials, SessionUser } from '../types';
 import { buildSessionUser, isTokenExpired } from '../utils/auth';
 import { getStoredSession } from '../utils/authStorage';
 import { normalizeAuthError } from '../utils/errorMessages';
+import { resetSessionExpiredBroadcast } from '../utils/sessionEvents';
 
 interface AuthState {
   token: string | null;
@@ -53,6 +54,7 @@ const authSlice = createSlice({
   reducers: {
     logout(state) {
       authService.logout();
+      resetSessionExpiredBroadcast();
       state.token = null;
       state.user = null;
       state.isAuthenticated = false;
@@ -70,6 +72,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
+        resetSessionExpiredBroadcast();
         state.loading = false;
         state.token = action.payload.token;
         state.user = action.payload.user;

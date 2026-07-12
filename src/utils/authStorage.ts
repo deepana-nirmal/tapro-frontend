@@ -3,6 +3,15 @@ import { SessionUser } from '../types';
 const TOKEN_KEY = 'tapro_token';
 const USER_KEY = 'tapro_user';
 const REMEMBER_EMAIL_KEY = 'tapro_remembered_email';
+const AUTH_STORAGE_KEYS = [
+  TOKEN_KEY,
+  USER_KEY,
+  'tapro_role',
+  'tapro_backend_role',
+  'tapro_restaurant_id',
+  'tapro_auth',
+  'tapro_session',
+];
 
 type StoredSession = {
   token: string | null;
@@ -46,10 +55,10 @@ export const persistSession = (token: string, user: SessionUser, rememberMe = tr
 };
 
 export const clearAuthSession = () => {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
-  sessionStorage.removeItem(TOKEN_KEY);
-  sessionStorage.removeItem(USER_KEY);
+  AUTH_STORAGE_KEYS.forEach((key) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  });
 };
 
 export const rememberEmail = (email: string) => {
