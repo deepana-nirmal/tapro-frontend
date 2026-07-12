@@ -204,30 +204,28 @@ export const AdminInvitationsPage = () => {
           <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{restaurantError}</p>
         ) : null}
         <form className="grid gap-4" onSubmit={handleSubmit}>
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-100">
-            <span>Restaurant</span>
-            <Select
-              value={restaurantId}
-              onChange={(event) => {
-                setRestaurantId(event.target.value);
-                if (restaurantFieldError) {
-                  setRestaurantFieldError('');
-                }
-              }}
-              disabled={restaurantsLoading || !!restaurantError || isOwner}
-              required
-            >
-              <option value="" disabled>
-                {restaurants.length ? 'Select restaurant' : 'No restaurants available'}
+          <Select
+            label="Restaurant"
+            value={restaurantId}
+            error={restaurantFieldError}
+            onChange={(event) => {
+              setRestaurantId(event.target.value);
+              if (restaurantFieldError) {
+                setRestaurantFieldError('');
+              }
+            }}
+            disabled={restaurantsLoading || !!restaurantError || isOwner}
+            required
+          >
+            <option value="" disabled>
+              {restaurants.length ? 'Select restaurant' : 'No restaurants available'}
+            </option>
+            {restaurants.map((restaurant) => (
+              <option key={restaurant.id} value={restaurant.id}>
+                {restaurant.name}
               </option>
-              {restaurants.map((restaurant) => (
-                <option key={restaurant.id} value={restaurant.id}>
-                  {restaurant.name}
-                </option>
-              ))}
-            </Select>
-            {restaurantFieldError ? <span className="text-xs text-rose-500">{restaurantFieldError}</span> : null}
-          </label>
+            ))}
+          </Select>
           <Input
             label="Email"
             type="email"
@@ -242,27 +240,25 @@ export const AdminInvitationsPage = () => {
             placeholder="restaurant.contact@example.com"
             required
           />
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-100">
-            <span>Role</span>
-            <Select
-              value={role}
-              onChange={(event) => {
-                setRole(event.target.value as InvitationRole);
-                if (roleError) {
-                  setRoleError('');
-                }
-              }}
-              disabled={restaurantsLoading || !!restaurantError}
-              required
-            >
-              {roleOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-            {roleError ? <span className="text-xs text-rose-500">{roleError}</span> : null}
-          </label>
+          <Select
+            label="Role"
+            value={role}
+            error={roleError}
+            onChange={(event) => {
+              setRole(event.target.value as InvitationRole);
+              if (roleError) {
+                setRoleError('');
+              }
+            }}
+            disabled={restaurantsLoading || !!restaurantError}
+            required
+          >
+            {roleOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
           {successMessage ? <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{successMessage}</p> : null}
           {errorMessage ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{errorMessage}</p> : null}
           <Button type="submit" className="w-full sm:w-fit" disabled={loading || restaurantsLoading || !!restaurantError}>

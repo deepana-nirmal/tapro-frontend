@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { ArrowRight, Mail } from 'lucide-react';
 import { authService } from '../api/services';
 import { AuthFormCard, AuthLayout, AuthSubmitButton, FormError, FormSuccess, PasswordField } from '../components/auth/AuthComponents';
-import { Input } from '../components/ui';
+import { Checkbox, Input } from '../components/ui';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { clearError, login } from '../store/authSlice';
 import { UserRole } from '../types';
@@ -101,16 +101,12 @@ export const LoginPage = () => {
             disabled={loading}
           />
           <div className="flex flex-col gap-3 text-sm min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
-            <label className="inline-flex min-h-11 cursor-pointer items-center gap-3 text-slate-700">
-              <input
-                type="checkbox"
-                checked={form.rememberMe}
-                onChange={(event) => updateField('rememberMe', event.target.checked)}
-                disabled={loading}
-                className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
-              />
-              <span>Remember me</span>
-            </label>
+            <Checkbox
+              label="Remember me"
+              checked={form.rememberMe}
+              onChange={(event) => updateField('rememberMe', event.target.checked)}
+              disabled={loading}
+            />
             <Link className="font-medium text-emerald-700" to="/forgot-password">Forgot password?</Link>
           </div>
           {loginState?.sessionExpired ? <FormError message="Your session expired. Please sign in again to continue." /> : null}
@@ -182,10 +178,13 @@ export const RegisterPage = () => {
           <Input name="email" label="Email" type="email" autoComplete="email" value={form.email} error={errors.email} onChange={(event) => setField('email', event.target.value)} disabled={submitting} required />
           <PasswordField name="password" label="Password" autoComplete="new-password" helperText="Use at least 6 characters." value={form.password} error={errors.password} onChange={(value) => setField('password', value)} disabled={submitting} />
           <PasswordField name="confirmPassword" label="Confirm password" autoComplete="new-password" value={form.confirmPassword} error={errors.confirmPassword} onChange={(value) => setField('confirmPassword', value)} disabled={submitting} />
-          <label className="inline-flex min-h-11 items-start gap-3 text-sm text-slate-700">
-            <input name="acceptTerms" type="checkbox" checked={form.acceptTerms} onChange={(event) => setField('acceptTerms', event.target.checked)} disabled={submitting} className="mt-1 h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
-            <span>I agree to the <Link className="font-semibold text-emerald-700" to="/privacy">Privacy Policy</Link> and <Link className="font-semibold text-emerald-700" to="/terms">Terms and Conditions</Link>.</span>
-          </label>
+          <Checkbox
+            name="acceptTerms"
+            label={<span>I agree to the <Link className="font-semibold text-emerald-700" to="/privacy">Privacy Policy</Link> and <Link className="font-semibold text-emerald-700" to="/terms">Terms and Conditions</Link>.</span>}
+            checked={form.acceptTerms}
+            onChange={(event) => setField('acceptTerms', event.target.checked)}
+            disabled={submitting}
+          />
           {errors.acceptTerms ? <p role="alert" className="text-xs text-red-600">{errors.acceptTerms}</p> : null}
           <FormError message={formError} />
           <AuthSubmitButton loading={submitting} loadingText="Creating account...">Create customer account</AuthSubmitButton>

@@ -4,7 +4,7 @@ import { categoryService, menuService } from '../../api/services';
 import { useAsyncResource } from '../../hooks';
 import { Category, MenuItem, MenuItemFormValues } from '../../types';
 import { ImageWithFallback, initialsFromName } from '../shared/ImageWithFallback';
-import { Button, Card, EmptyState, Input, Select, StatusBadge, Textarea } from '../ui';
+import { Button, Card, EmptyState, FileUploader, Input, Select, StatusBadge, Textarea } from '../ui';
 import { formatCurrency } from '../../utils/format';
 import { validateImageFile } from '../../utils/upload';
 import { normalizeApiError } from '../../utils/errorMessages';
@@ -392,15 +392,12 @@ export const CategoryWorkspace = ({
           ))}
         </Select>
       ) : null}
-      <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-100">
-        <span>Image Upload</span>
-        <input
-          type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif"
-          onChange={(event: ChangeEvent<HTMLInputElement>) => setImageFile(event.target.files?.[0] || null)}
-        />
-        {imageFile ? <span className="text-xs text-slate-500">{imageFile.name}</span> : null}
-      </label>
+      <FileUploader
+        label="Image Upload"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        onChange={(event: ChangeEvent<HTMLInputElement>) => setImageFile(event.target.files?.[0] || null)}
+        description={imageFile?.name}
+      />
       {error ? <p className="md:col-span-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
       <div className="md:col-span-2">
         <Button type="submit" disabled={loading}>{loading ? 'Saving...' : submitLabel}</Button>
@@ -429,14 +426,11 @@ export const CategoryWorkspace = ({
         <h3 className="text-lg font-semibold text-slate-950 dark:text-white">Create Category</h3>
         <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={submitCategory}>
           <Input label="Category Name" value={categoryName} onChange={(event) => setCategoryName(event.target.value)} required />
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-100">
-            <span>Category Image</span>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => setCategoryImageFile(event.target.files?.[0] || null)}
-            />
-          </label>
+          <FileUploader
+            label="Category Image"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(event: ChangeEvent<HTMLInputElement>) => setCategoryImageFile(event.target.files?.[0] || null)}
+          />
           {categoryError ? <p className="md:col-span-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{categoryError}</p> : null}
           <div className="md:col-span-2">
             <Button type="submit" disabled={categorySubmitting}>{categorySubmitting ? 'Creating...' : 'Create category'}</Button>
@@ -507,14 +501,12 @@ export const CategoryWorkspace = ({
               </div>
             </div>
             <div className="w-full max-w-sm">
-              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-100">
-                <span>Update Category Image</span>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => setCategoryImageFile(event.target.files?.[0] || null)}
-                />
-              </label>
+              <FileUploader
+                label="Update Category Image"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => setCategoryImageFile(event.target.files?.[0] || null)}
+                description={categoryImageFile?.name}
+              />
             </div>
           </div>
 
