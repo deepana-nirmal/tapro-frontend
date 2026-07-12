@@ -29,6 +29,7 @@ export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, loading, error } = useAppSelector((state) => state.auth);
+  const loginState = location.state as { from?: string; sessionExpired?: boolean; loggedOut?: boolean } | null;
   const rememberedEmail = getRememberedEmail();
   const [form, setForm] = useState({ email: rememberedEmail, password: '', rememberMe: Boolean(rememberedEmail) });
   const [errors, setErrors] = useState<LoginErrors>({ email: '', password: '' });
@@ -65,7 +66,7 @@ export const LoginPage = () => {
       if (form.rememberMe) rememberEmail(email);
       else clearRememberedEmail();
       toast.success('Welcome back');
-      const returnTo = getSafeReturnTo((location.state as { from?: string } | null)?.from);
+      const returnTo = getSafeReturnTo(loginState?.from);
       navigate(returnTo || defaultPathByRole[result.payload.user.role], { replace: true });
     }
   };
@@ -112,6 +113,8 @@ export const LoginPage = () => {
             </label>
             <Link className="font-medium text-emerald-700" to="/forgot-password">Forgot password?</Link>
           </div>
+          {loginState?.sessionExpired ? <FormError message="Your session expired. Please sign in again to continue." /> : null}
+          {loginState?.loggedOut ? <FormSuccess message="You have been logged out securely." /> : null}
           <FormError message={error || undefined} />
           <AuthSubmitButton loading={loading} loadingText="Signing in...">
             Sign in <ArrowRight aria-hidden className="h-4 w-4" />

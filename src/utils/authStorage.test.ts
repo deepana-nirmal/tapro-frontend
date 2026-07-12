@@ -32,10 +32,15 @@ describe('auth storage', () => {
 
   it('clears auth tokens from both storage scopes without clearing remembered email unless requested', () => {
     persistSession('token.local', user, true);
+    persistSession('token.session', user, false);
+    localStorage.setItem('tapro_role', 'OWNER');
+    sessionStorage.setItem('tapro_restaurant_id', '1');
     rememberEmail(user.email);
 
     clearAuthSession();
     expect(getStoredSession().token).toBeNull();
+    expect(localStorage.getItem('tapro_role')).toBeNull();
+    expect(sessionStorage.getItem('tapro_restaurant_id')).toBeNull();
     expect(getRememberedEmail()).toBe(user.email);
 
     clearRememberedEmail();
