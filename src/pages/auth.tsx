@@ -1,91 +1,27 @@
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from 'react';
-import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
-import { authService, invitationService } from '../api/services';
-import TaproLogo from '../components/branding/TaproLogo';
+import { ArrowRight, Mail } from 'lucide-react';
+import { authService } from '../api/services';
+import { AuthFormCard, AuthLayout, AuthSubmitButton, FormError, FormSuccess, PasswordField } from '../components/auth/AuthComponents';
+import { Input } from '../components/ui';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { clearError, login } from '../store/authSlice';
-import { Button, Card, Input, PageHeader, Select } from '../components/ui';
-import { defaultPathByRole } from '../utils/auth';
 import { UserRole } from '../types';
+import { defaultPathByRole } from '../utils/auth';
+import { clearRememberedEmail, getRememberedEmail, rememberEmail } from '../utils/authStorage';
+import { focusFirstError, validateConfirmPassword, validateEmail, validatePassword, validateRequiredToken } from '../utils/authValidation';
+import { normalizeAuthError } from '../utils/errorMessages';
 
-const authWrapper = (title: string, description: string, children: ReactNode) => (
-  <div className="min-h-screen min-h-[100dvh] overflow-x-clip bg-[linear-gradient(145deg,#f5f7f2_0%,#eef7f2_45%,#dfeee7_100%)] px-3 py-4 dark:bg-[linear-gradient(145deg,#08120f_0%,#0b1a16_45%,#12211d_100%)] sm:px-6 sm:py-8 lg:px-8">
-    <div className="mx-auto grid min-h-[calc(100dvh-2rem)] max-w-7xl gap-4 sm:gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-      <div className="relative overflow-hidden rounded-[28px] border border-emerald-900/10 bg-[#123629] p-5 text-white shadow-[0_40px_120px_rgba(18,54,41,0.28)] dark:border-white/10 dark:bg-[#0d211a] sm:rounded-[36px] sm:p-10 lg:p-12">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.18),_transparent_32%),radial-gradient(circle_at_bottom_left,_rgba(244,196,48,0.16),_transparent_28%)]" />
-        <div className="relative flex h-full flex-col justify-between gap-8">
-          <div>
-            <div className="inline-flex items-center rounded-[24px] border border-white/15 bg-white/92 px-4 py-3 shadow-lg shadow-black/10">
-              <TaproLogo size="md" className="max-w-[320px]" />
-            </div>
-            <div className="mt-3 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-emerald-50/85 backdrop-blur">
-              Restaurant OS
-            </div>
-            <h1 className="mt-6 max-w-xl text-[clamp(2rem,9vw,3rem)] font-semibold tracking-[-0.05em] sm:mt-8">{title}</h1>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-emerald-50/78 sm:text-base">{description}</p>
-          </div>
-          <div className="hidden gap-4 sm:grid sm:grid-cols-3">
-            {[
-              ['Orders in motion', 'Live kitchen, cashier, and floor coordination from one workspace.'],
-              ['Restaurant-aware access', 'Each login lands in the right operational surface for that role.'],
-              ['Invitation-led staffing', 'Owners and platform admins onboard the right people into the right venue.'],
-            ].map(([label, copy]) => (
-              <div key={label} className="rounded-3xl border border-white/10 bg-white/8 p-4 backdrop-blur">
-                <p className="text-sm font-semibold text-white">{label}</p>
-                <p className="mt-2 text-xs leading-6 text-emerald-50/75">{copy}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center justify-center">{children}</div>
-    </div>
-  </div>
-);
+const CUSTOMER_ROLE: UserRole = 'CUSTOMER';
 
-const PasswordField = ({
-  label,
-  value,
-  onChange,
-  error,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string | null;
-  placeholder?: string;
-}) => {
-  const [visible, setVisible] = useState(false);
+type LoginErrors = { email: string; password: string };
+type PasswordPairErrors = { password: string; confirmPassword: string };
 
-  return (
-    <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-      <span>{label}</span>
-      <div className="relative">
-        <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input
-          type={visible ? 'text' : 'password'}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={placeholder}
-          autoComplete="current-password"
-          className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3 pr-14 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:shadow-[0_0_0_4px_rgba(16,185,129,0.08)]"
-          required
-        />
-        <button
-          type="button"
-          className="absolute right-1 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
-          onClick={() => setVisible((current) => !current)}
-          aria-label={visible ? 'Hide password' : 'Show password'}
-        >
-          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
-      {error ? <span className="text-xs text-rose-500">{error}</span> : null}
-    </label>
-  );
+const getSafeReturnTo = (value: unknown) => {
+  if (typeof value !== 'string') return '';
+  if (!value.startsWith('/') || value.startsWith('//')) return '';
+  return value;
 };
 
 export const LoginPage = () => {
@@ -93,217 +29,336 @@ export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, loading, error } = useAppSelector((state) => state.auth);
-  const [form, setForm] = useState({ email: '', password: '' });
+  const rememberedEmail = getRememberedEmail();
+  const [form, setForm] = useState({ email: rememberedEmail, password: '', rememberMe: Boolean(rememberedEmail) });
+  const [errors, setErrors] = useState<LoginErrors>({ email: '', password: '' });
 
-  useEffect(() => {
-    return () => {
-      dispatch(clearError());
-    };
-  }, [dispatch]);
+  useEffect(() => () => { dispatch(clearError()); }, [dispatch]);
 
   if (isAuthenticated && user) {
     return <Navigate to={defaultPathByRole[user.role]} replace />;
   }
 
+  const updateField = (field: keyof typeof form, value: string | boolean) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: '' }));
+    if (error) dispatch(clearError());
+  };
+
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const result = await dispatch(login(form));
-    if (login.fulfilled.match(result)) {
-      toast.success('Welcome back');
-      navigate(location.state?.from || defaultPathByRole[result.payload.user.role], { replace: true });
+    if (loading) return;
+
+    const nextErrors = {
+      email: validateEmail(form.email),
+      password: validatePassword(form.password),
+    };
+    setErrors(nextErrors);
+    if (nextErrors.email || nextErrors.password) {
+      focusFirstError(nextErrors);
       return;
     }
 
-    toast.error(result.payload || 'Unable to sign in');
+    const email = form.email.trim();
+    const result = await dispatch(login({ email, password: form.password, rememberMe: form.rememberMe }));
+    if (login.fulfilled.match(result)) {
+      if (form.rememberMe) rememberEmail(email);
+      else clearRememberedEmail();
+      toast.success('Welcome back');
+      const returnTo = getSafeReturnTo((location.state as { from?: string } | null)?.from);
+      navigate(returnTo || defaultPathByRole[result.payload.user.role], { replace: true });
+    }
   };
 
-  return authWrapper(
-    'Operate every restaurant from one deliberate control plane.',
-    'Tapro gives platform admins, owners, kitchen teams, and staff a role-aware workspace for service, menu operations, and restaurant growth.',
-    <Card className="w-full max-w-xl border-slate-200/80 bg-white/95 p-0 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur">
-      <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
-          <ShieldCheck className="h-3.5 w-3.5" />
-          Secure Sign In
-        </div>
-        <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Welcome back</h2>
-        <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
-          Sign in to continue into your Tapro workspace. Your destination is chosen automatically from your assigned role.
-        </p>
-      </div>
-      <form className="space-y-5 px-6 py-6 sm:px-8 sm:py-8" onSubmit={onSubmit}>
-        <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-          <span>Email</span>
-          <div className="relative">
-            <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="email"
-              value={form.email}
-              autoComplete="email"
-              onChange={(event) => {
-                if (error) {
-                  dispatch(clearError());
-                }
-                setForm({ ...form, email: event.target.value });
-              }}
-              placeholder="you@restaurant.com"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:shadow-[0_0_0_4px_rgba(16,185,129,0.08)]"
-              required
-            />
+  return (
+    <AuthLayout title="Welcome back" description="Sign in to manage your restaurant, menu, tables, staff, and orders.">
+      <AuthFormCard
+        eyebrow="Secure sign in"
+        title="Welcome back"
+        description="Use your Tapro account to continue into the right workspace for your role."
+        footer={<span>New to Tapro? <Link className="font-semibold text-emerald-700" to="/register">Create a customer account</Link></span>}
+      >
+        <form className="grid gap-5" onSubmit={onSubmit} aria-busy={loading}>
+          <Input
+            name="email"
+            label="Email"
+            type="email"
+            autoComplete="email"
+            value={form.email}
+            error={errors.email}
+            onChange={(event) => updateField('email', event.target.value)}
+            disabled={loading}
+            required
+          />
+          <PasswordField
+            name="password"
+            label="Password"
+            autoComplete="current-password"
+            value={form.password}
+            error={errors.password}
+            onChange={(value) => updateField('password', value)}
+            disabled={loading}
+          />
+          <div className="flex flex-col gap-3 text-sm min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
+            <label className="inline-flex min-h-11 cursor-pointer items-center gap-3 text-slate-700">
+              <input
+                type="checkbox"
+                checked={form.rememberMe}
+                onChange={(event) => updateField('rememberMe', event.target.checked)}
+                disabled={loading}
+                className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+              />
+              <span>Remember me</span>
+            </label>
+            <Link className="font-medium text-emerald-700" to="/forgot-password">Forgot password?</Link>
           </div>
-        </label>
-        <PasswordField
-          label="Password"
-          value={form.password}
-          onChange={(value) => {
-            if (error) {
-              dispatch(clearError());
-            }
-            setForm({ ...form, password: value });
-          }}
-          placeholder="Enter your password"
-        />
-        {error ? (
-          <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>
-        ) : null}
-        <div className="flex flex-col gap-3 text-sm min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
-          <a className="text-teal-600 dark:text-teal-300" href="/forgot-password">Forgot password?</a>
-          <a className="text-teal-600 dark:text-teal-300" href="/register">Customer register</a>
-        </div>
-        <Button type="submit" className="w-full gap-2 py-3 text-sm" disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign in to Tapro'}
-          {!loading ? <ArrowRight className="h-4 w-4" /> : null}
-        </Button>
-        <p className="text-center text-xs leading-6 text-slate-500">
-          Your session is secured with JWT authentication and redirected to the correct restaurant workspace after sign-in.
-        </p>
-      </form>
-    </Card>
+          <FormError message={error || undefined} />
+          <AuthSubmitButton loading={loading} loadingText="Signing in...">
+            Sign in <ArrowRight aria-hidden className="h-4 w-4" />
+          </AuthSubmitButton>
+          <p className="text-xs leading-5 text-slate-500">
+            Remember Me stores your session in this browser. Without it, the session is limited to this browser tab session. Token expiration is still controlled by the backend.
+          </p>
+        </form>
+      </AuthFormCard>
+    </AuthLayout>
   );
 };
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '', role: 'CUSTOMER' as UserRole });
+  const [form, setForm] = useState({ email: '', password: '', confirmPassword: '', acceptTerms: false });
+  const [errors, setErrors] = useState({ email: '', password: '', confirmPassword: '', acceptTerms: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+
+  const setField = (field: keyof typeof form, value: string | boolean) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: '' }));
+    setFormError('');
+  };
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    await authService.register(form);
-    toast.success('Registration submitted');
-    navigate('/login');
+    if (submitting) return;
+
+    const nextErrors = {
+      email: validateEmail(form.email),
+      password: validatePassword(form.password),
+      confirmPassword: validateConfirmPassword(form.password, form.confirmPassword),
+      acceptTerms: form.acceptTerms ? '' : 'You must accept the Privacy Policy and Terms.',
+    };
+    setErrors(nextErrors);
+    if (Object.values(nextErrors).some(Boolean)) {
+      focusFirstError(nextErrors);
+      return;
+    }
+
+    setSubmitting(true);
+    setFormError('');
+    try {
+      await authService.register({ email: form.email.trim(), password: form.password, role: CUSTOMER_ROLE });
+      toast.success('Registration submitted');
+      navigate('/login', { replace: true });
+    } catch (error) {
+      setFormError(normalizeAuthError(error, 'Unable to create the account.'));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  return authWrapper(
-    'Register',
-    'Customer self-service account creation',
-    <Card className="p-4 sm:p-8">
-      <PageHeader title="Create account" description="Customers can register directly. Staff accounts should come through invitations." />
-      <form className="mt-8 space-y-4" onSubmit={onSubmit}>
-        <Input label="Email" type="email" autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
-        <Input label="Password" type="password" autoComplete="current-password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
-        <Select label="Role" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as UserRole })}>
-          <option value="CUSTOMER">Customer</option>
-        </Select>
-        <Button type="submit" className="w-full">Register</Button>
-      </form>
-    </Card>
+  return (
+    <AuthLayout title="Create your Tapro account" description="Start with a customer account. Staff and restaurant-owner access is managed through secure invitations.">
+      <AuthFormCard
+        eyebrow="Customer registration"
+        title="Create your Tapro account"
+        description="Public registration creates a customer account only. Restaurant staff and owner accounts must use an invitation."
+        footer={<span>Already have an account? <Link className="font-semibold text-emerald-700" to="/login">Sign in</Link></span>}
+      >
+        <form className="grid gap-5" onSubmit={onSubmit} aria-busy={submitting}>
+          <Input name="email" label="Email" type="email" autoComplete="email" value={form.email} error={errors.email} onChange={(event) => setField('email', event.target.value)} disabled={submitting} required />
+          <PasswordField name="password" label="Password" autoComplete="new-password" helperText="Use at least 6 characters." value={form.password} error={errors.password} onChange={(value) => setField('password', value)} disabled={submitting} />
+          <PasswordField name="confirmPassword" label="Confirm password" autoComplete="new-password" value={form.confirmPassword} error={errors.confirmPassword} onChange={(value) => setField('confirmPassword', value)} disabled={submitting} />
+          <label className="inline-flex min-h-11 items-start gap-3 text-sm text-slate-700">
+            <input name="acceptTerms" type="checkbox" checked={form.acceptTerms} onChange={(event) => setField('acceptTerms', event.target.checked)} disabled={submitting} className="mt-1 h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
+            <span>I agree to the <Link className="font-semibold text-emerald-700" to="/privacy">Privacy Policy</Link> and <Link className="font-semibold text-emerald-700" to="/terms">Terms and Conditions</Link>.</span>
+          </label>
+          {errors.acceptTerms ? <p role="alert" className="text-xs text-red-600">{errors.acceptTerms}</p> : null}
+          <FormError message={formError} />
+          <AuthSubmitButton loading={submitting} loadingText="Creating account...">Create customer account</AuthSubmitButton>
+        </form>
+      </AuthFormCard>
+    </AuthLayout>
   );
 };
 
 export const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
-  return authWrapper(
-    'Forgot Password',
-    'Password reset request flow',
-    <Card className="p-4 sm:p-8">
-      <PageHeader title="Forgot Password" description="Request password reset instructions for your Tapro account." />
-      <form
-        className="mt-8 space-y-4"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          await authService.forgotPassword(email);
-          toast.success('Reset instructions sent');
-        }}
+  const [emailError, setEmailError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const onSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (submitting) return;
+    const nextError = validateEmail(email);
+    setEmailError(nextError);
+    if (nextError) {
+      focusFirstError({ email: nextError });
+      return;
+    }
+
+    setSubmitting(true);
+    setFormError('');
+    setSuccess('');
+    try {
+      await authService.forgotPassword(email.trim());
+      setSuccess('If an account exists for this email, password reset instructions have been sent.');
+    } catch (error) {
+      setFormError(normalizeAuthError(error, 'Unable to request password reset instructions.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <AuthLayout title="Forgot your password?" description="Request secure reset instructions for your Tapro account.">
+      <AuthFormCard
+        eyebrow="Password recovery"
+        title="Forgot your password?"
+        description="Enter the email associated with your Tapro account. If an eligible account exists, reset instructions will be sent."
+        footer={<Link className="font-semibold text-emerald-700" to="/login">Back to sign in</Link>}
       >
-        <Input label="Email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-        <Button type="submit" className="w-full">Send reset link</Button>
-      </form>
-    </Card>
+        <form className="grid gap-5" onSubmit={onSubmit} aria-busy={submitting}>
+          <Input name="email" label="Email" type="email" autoComplete="email" value={email} error={emailError} onChange={(event) => { setEmail(event.target.value); setEmailError(''); setFormError(''); }} disabled={submitting} required />
+          <FormSuccess message={success} />
+          <FormError message={formError} />
+          <AuthSubmitButton loading={submitting} loadingText="Sending...">
+            Send reset link <Mail aria-hidden className="h-4 w-4" />
+          </AuthSubmitButton>
+        </form>
+      </AuthFormCard>
+    </AuthLayout>
   );
 };
 
 export const ResetPasswordPage = () => {
   const [params] = useSearchParams();
-  const [password, setPassword] = useState('');
-  return authWrapper(
-    'Reset Password',
-    'Token-based password reset',
-    <Card className="p-4 sm:p-8">
-      <PageHeader title="Reset Password" description="Reset tokens are read from the `token` query string." />
-      <form
-        className="mt-8 space-y-4"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          const token = params.get('token');
-          if (!token) {
-            toast.error('Reset token is missing.');
-            return;
-          }
-          await authService.resetPassword(token, password);
-          toast.success('Password reset complete');
-        }}
+  const token = useMemo(() => params.get('token')?.trim() || '', [params]);
+  const [form, setForm] = useState({ password: '', confirmPassword: '' });
+  const [errors, setErrors] = useState<PasswordPairErrors>({ password: '', confirmPassword: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState(validateRequiredToken(token, 'Reset token'));
+  const [success, setSuccess] = useState('');
+
+  const setField = (field: keyof typeof form, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: '' }));
+    setFormError(validateRequiredToken(token, 'Reset token'));
+  };
+
+  const onSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (submitting) return;
+
+    const tokenError = validateRequiredToken(token, 'Reset token');
+    const nextErrors = {
+      password: validatePassword(form.password, 'New password'),
+      confirmPassword: validateConfirmPassword(form.password, form.confirmPassword),
+    };
+    setErrors(nextErrors);
+    setFormError(tokenError);
+    if (tokenError || nextErrors.password || nextErrors.confirmPassword) {
+      focusFirstError(tokenError ? { password: tokenError } : nextErrors);
+      return;
+    }
+
+    setSubmitting(true);
+    setSuccess('');
+    try {
+      await authService.resetPassword(token, form.password);
+      setSuccess('Password reset complete. You can now sign in with your new password.');
+      setForm({ password: '', confirmPassword: '' });
+    } catch (error) {
+      setFormError(normalizeAuthError(error, 'This reset link is invalid or has expired. Request a new password reset link.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <AuthLayout title="Reset your password" description="Choose a new password for your Tapro account.">
+      <AuthFormCard
+        eyebrow="Password reset"
+        title="Reset password"
+        description="Enter and confirm a new password. Reset links may expire for security."
+        footer={<Link className="font-semibold text-emerald-700" to="/login">Back to sign in</Link>}
       >
-        <Input label="New password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-        <Button type="submit" className="w-full">Reset password</Button>
-      </form>
-    </Card>
+        <form className="grid gap-5" onSubmit={onSubmit} aria-busy={submitting}>
+          <PasswordField name="password" label="New password" autoComplete="new-password" helperText="Use at least 6 characters." value={form.password} error={errors.password} onChange={(value) => setField('password', value)} disabled={submitting || Boolean(success)} />
+          <PasswordField name="confirmPassword" label="Confirm new password" autoComplete="new-password" value={form.confirmPassword} error={errors.confirmPassword} onChange={(value) => setField('confirmPassword', value)} disabled={submitting || Boolean(success)} />
+          <FormSuccess message={success} />
+          <FormError message={formError && !success ? formError : ''} />
+          <AuthSubmitButton loading={submitting} loadingText="Resetting..." disabled={Boolean(success)}>Reset password</AuthSubmitButton>
+        </form>
+      </AuthFormCard>
+    </AuthLayout>
   );
 };
 
 export const ChangePasswordPage = () => {
-  const [form, setForm] = useState({ currentPassword: '', newPassword: '' });
-  return authWrapper(
-    'Change Password',
-    'Authenticated password rotation',
-    <Card className="p-4 sm:p-8">
-      <PageHeader title="Change Password" description="Useful for owners, managers, and cashiers after first login." />
-      <form
-        className="mt-8 space-y-4"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          await authService.changePassword(form.currentPassword, form.newPassword);
-          toast.success('Password updated');
-        }}
-      >
-        <Input label="Current password" type="password" autoComplete="current-password" value={form.currentPassword} onChange={(event) => setForm({ ...form, currentPassword: event.target.value })} required />
-        <Input label="New password" type="password" autoComplete="new-password" value={form.newPassword} onChange={(event) => setForm({ ...form, newPassword: event.target.value })} required />
-        <Button type="submit" className="w-full">Change password</Button>
-      </form>
-    </Card>
-  );
-};
+  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [errors, setErrors] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [success, setSuccess] = useState('');
 
-export const AcceptInvitationPage = () => {
-  const [params] = useSearchParams();
-  const token = useMemo(() => params.get('token') || 'demo-token', [params]);
-  const [password, setPassword] = useState('');
+  const setField = (field: keyof typeof form, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: '' }));
+    setFormError('');
+    setSuccess('');
+  };
 
-  return authWrapper(
-    'Accept Invitation',
-    'Token validation and account activation',
-    <Card className="p-4 sm:p-8">
-      <PageHeader title="Activate Invitation" description={`Invitation token: ${token}`} />
-      <form
-        className="mt-8 space-y-4"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          await invitationService.accept(token, password);
-          toast.success('Invitation accepted');
-        }}
-      >
-        <Input label="Create password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-        <Button type="submit" className="w-full">Activate account</Button>
-      </form>
-    </Card>
+  const onSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (submitting) return;
+    const nextErrors = {
+      currentPassword: validatePassword(form.currentPassword, 'Current password'),
+      newPassword: validatePassword(form.newPassword, 'New password'),
+      confirmPassword: validateConfirmPassword(form.newPassword, form.confirmPassword),
+    };
+    setErrors(nextErrors);
+    if (Object.values(nextErrors).some(Boolean)) {
+      focusFirstError(nextErrors);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await authService.changePassword(form.currentPassword, form.newPassword);
+      setSuccess('Password updated.');
+      setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error) {
+      setFormError(normalizeAuthError(error, 'Unable to update password.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <AuthLayout title="Change password" description="Keep your Tapro account credentials current.">
+      <AuthFormCard eyebrow="Account security" title="Change password" description="Enter your current password and choose a new one.">
+        <form className="grid gap-5" onSubmit={onSubmit} aria-busy={submitting}>
+          <PasswordField name="currentPassword" label="Current password" autoComplete="current-password" value={form.currentPassword} error={errors.currentPassword} onChange={(value) => setField('currentPassword', value)} disabled={submitting} />
+          <PasswordField name="newPassword" label="New password" autoComplete="new-password" helperText="Use at least 6 characters." value={form.newPassword} error={errors.newPassword} onChange={(value) => setField('newPassword', value)} disabled={submitting} />
+          <PasswordField name="confirmPassword" label="Confirm new password" autoComplete="new-password" value={form.confirmPassword} error={errors.confirmPassword} onChange={(value) => setField('confirmPassword', value)} disabled={submitting} />
+          <FormSuccess message={success} />
+          <FormError message={formError} />
+          <AuthSubmitButton loading={submitting} loadingText="Updating...">Update password</AuthSubmitButton>
+        </form>
+      </AuthFormCard>
+    </AuthLayout>
   );
 };
