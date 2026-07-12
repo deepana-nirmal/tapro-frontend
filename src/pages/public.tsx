@@ -668,12 +668,12 @@ export const RestaurantMenuPage = () => {
       </div>
       {cartCount ? (
         <div className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 sm:inset-x-4">
-          <Link to="/checkout" className="flex items-center justify-between gap-3 rounded-3xl bg-slate-950 px-4 py-3 text-white shadow-2xl shadow-slate-950/20 sm:px-5 sm:py-4">
-            <div>
+            <Link to="/checkout" className="flex min-w-0 items-center justify-between gap-3 rounded-3xl bg-slate-950 px-4 py-3 text-white shadow-2xl shadow-slate-950/20 sm:px-5 sm:py-4">
+            <div className="min-w-0">
               <p className="text-sm font-semibold">{cartCount} item{cartCount > 1 ? 's' : ''} in cart</p>
               <p className="text-xs text-slate-300">Ready to place your order</p>
             </div>
-            <div className="text-right">
+            <div className="shrink-0 text-right">
               <p className="text-lg font-semibold">{formatCurrency(cartTotal, restaurant?.currencyCode || 'LKR')}</p>
               <p className="text-xs text-slate-300">View cart</p>
             </div>
@@ -749,20 +749,20 @@ export const CheckoutPage = () => {
               <div className="space-y-4">
                 {cart.map((item) => (
                   <div key={item.menuItemId} className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="font-semibold text-slate-950 dark:text-white">{item.name}</h3>
                       <p className="text-sm text-slate-600 dark:text-slate-300">{formatCurrency(item.price, restaurant?.currencyCode || 'LKR')} each</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Input type="number" min={1} value={item.quantity} onChange={(event) => dispatch(updateQuantity({ menuItemId: item.menuItemId, quantity: Number(event.target.value) }))} className="w-24" />
-                      <Button variant="ghost" onClick={() => dispatch(removeFromCart(item.menuItemId))}>Remove</Button>
+                    <div className="flex min-w-0 flex-col gap-3 min-[420px]:flex-row min-[420px]:items-center">
+                      <Input type="number" min={1} value={item.quantity} onChange={(event) => dispatch(updateQuantity({ menuItemId: item.menuItemId, quantity: Number(event.target.value) }))} className="min-[420px]:w-24" />
+                      <Button variant="ghost" className="w-full min-[420px]:w-auto" onClick={() => dispatch(removeFromCart(item.menuItemId))}>Remove</Button>
                     </div>
                   </div>
                 ))}
               </div>
               <div className="mt-6 flex flex-col gap-4 border-t border-slate-200 pt-6 dark:border-slate-800 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
                 <p className="text-lg font-semibold text-slate-950 dark:text-white">Total: {formatCurrency(total, restaurant?.currencyCode || 'LKR')}</p>
-                <Button onClick={submitOrder}>Place order</Button>
+                <Button onClick={submitOrder} className="w-full min-[400px]:w-auto">Place order</Button>
               </div>
             </Card>
           </>
