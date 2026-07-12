@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { Toaster, ErrorBoundary } from './components/ui';
@@ -8,48 +8,51 @@ import { restoreSession } from './store/authSlice';
 import { setDarkMode } from './store/uiSlice';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AppShell from './components/layout/AppShell';
-import {
-  ChangePasswordPage,
-  ForgotPasswordPage,
-  LoginPage,
-  RegisterPage,
-  ResetPasswordPage,
-} from './pages/auth';
-import { AcceptInvitationPage, AdminInvitationsPage } from './pages/invitations';
-import { CheckoutPage, RestaurantMenuPage, TrackOrderPage } from './pages/customerOrdering';
-import { LandingPage } from './pages/LandingPage';
-import { PrivacyPolicyPage, TermsPage } from './pages/legal';
-import {
-  InvitationManagementPage,
-  PlatformReportsPage,
-  PlatformSettingsPage,
-  RestaurantsManagementPage,
-  SubscriptionManagementPage,
-  SuperAdminDashboardPage,
-  SuperAdminRestaurantDetailPage,
-  SuperAdminUsersManagementPage,
-} from './pages/admin';
-import {
-  CategoryManagementPage,
-  MenuItemsManagementPage,
-  OwnerDashboardPage,
-  OwnerOrdersPage,
-  OwnerReportsPage,
-  RestaurantProfilePage,
-  StaffManagementPage,
-  TableManagementPage,
-} from './pages/owner';
-import {
-  BillingPage,
-  CashierDashboardPage,
-  KitchenDashboardPage,
-  ManagerDashboardPage,
-  ManagerMenuPage,
-  ManagerOrdersPage,
-  ManagerTablesPage,
-  PaymentsPage,
-} from './pages/staff';
-import { CustomerDashboardPage, CustomerOrdersPage, CustomerProfilePage } from './pages/customer';
+import { LoadingBlock } from './components/ui';
+
+const lazyPage = <T extends Record<string, any>, K extends keyof T>(loader: () => Promise<T>, exportName: K) =>
+  lazy(() => loader().then((module) => ({ default: module[exportName] as any })));
+
+const LandingPage = lazyPage(() => import('./pages/LandingPage'), 'LandingPage');
+const PrivacyPolicyPage = lazyPage(() => import('./pages/legal'), 'PrivacyPolicyPage');
+const TermsPage = lazyPage(() => import('./pages/legal'), 'TermsPage');
+const LoginPage = lazyPage(() => import('./pages/auth'), 'LoginPage');
+const RegisterPage = lazyPage(() => import('./pages/auth'), 'RegisterPage');
+const ForgotPasswordPage = lazyPage(() => import('./pages/auth'), 'ForgotPasswordPage');
+const ResetPasswordPage = lazyPage(() => import('./pages/auth'), 'ResetPasswordPage');
+const ChangePasswordPage = lazyPage(() => import('./pages/auth'), 'ChangePasswordPage');
+const AcceptInvitationPage = lazyPage(() => import('./pages/invitations'), 'AcceptInvitationPage');
+const AdminInvitationsPage = lazyPage(() => import('./pages/invitations'), 'AdminInvitationsPage');
+const CheckoutPage = lazyPage(() => import('./pages/customerOrdering'), 'CheckoutPage');
+const RestaurantMenuPage = lazyPage(() => import('./pages/customerOrdering'), 'RestaurantMenuPage');
+const TrackOrderPage = lazyPage(() => import('./pages/customerOrdering'), 'TrackOrderPage');
+const SuperAdminDashboardPage = lazyPage(() => import('./pages/admin'), 'SuperAdminDashboardPage');
+const RestaurantsManagementPage = lazyPage(() => import('./pages/admin'), 'RestaurantsManagementPage');
+const SuperAdminRestaurantDetailPage = lazyPage(() => import('./pages/admin'), 'SuperAdminRestaurantDetailPage');
+const SuperAdminUsersManagementPage = lazyPage(() => import('./pages/admin'), 'SuperAdminUsersManagementPage');
+const InvitationManagementPage = lazyPage(() => import('./pages/admin'), 'InvitationManagementPage');
+const SubscriptionManagementPage = lazyPage(() => import('./pages/admin'), 'SubscriptionManagementPage');
+const PlatformReportsPage = lazyPage(() => import('./pages/admin'), 'PlatformReportsPage');
+const PlatformSettingsPage = lazyPage(() => import('./pages/admin'), 'PlatformSettingsPage');
+const OwnerDashboardPage = lazyPage(() => import('./pages/owner'), 'OwnerDashboardPage');
+const RestaurantProfilePage = lazyPage(() => import('./pages/owner'), 'RestaurantProfilePage');
+const StaffManagementPage = lazyPage(() => import('./pages/owner'), 'StaffManagementPage');
+const TableManagementPage = lazyPage(() => import('./pages/owner'), 'TableManagementPage');
+const CategoryManagementPage = lazyPage(() => import('./pages/owner'), 'CategoryManagementPage');
+const MenuItemsManagementPage = lazyPage(() => import('./pages/owner'), 'MenuItemsManagementPage');
+const OwnerOrdersPage = lazyPage(() => import('./pages/owner'), 'OwnerOrdersPage');
+const OwnerReportsPage = lazyPage(() => import('./pages/owner'), 'OwnerReportsPage');
+const ManagerDashboardPage = lazyPage(() => import('./pages/staff'), 'ManagerDashboardPage');
+const CashierDashboardPage = lazyPage(() => import('./pages/staff'), 'CashierDashboardPage');
+const ManagerMenuPage = lazyPage(() => import('./pages/staff'), 'ManagerMenuPage');
+const ManagerOrdersPage = lazyPage(() => import('./pages/staff'), 'ManagerOrdersPage');
+const ManagerTablesPage = lazyPage(() => import('./pages/staff'), 'ManagerTablesPage');
+const KitchenDashboardPage = lazyPage(() => import('./pages/staff'), 'KitchenDashboardPage');
+const BillingPage = lazyPage(() => import('./pages/staff'), 'BillingPage');
+const PaymentsPage = lazyPage(() => import('./pages/staff'), 'PaymentsPage');
+const CustomerDashboardPage = lazyPage(() => import('./pages/customer'), 'CustomerDashboardPage');
+const CustomerOrdersPage = lazyPage(() => import('./pages/customer'), 'CustomerOrdersPage');
+const CustomerProfilePage = lazyPage(() => import('./pages/customer'), 'CustomerProfilePage');
 
 const StaffDashboardPage = () => {
   const user = useAppSelector((state) => state.auth.user);
@@ -76,6 +79,7 @@ const AppRoutes = () => {
   }, [darkMode, dispatch]);
 
   return (
+    <Suspense fallback={<div className="p-6"><LoadingBlock label="Loading page..." /></div>}>
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
@@ -154,6 +158,7 @@ const AppRoutes = () => {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 };
 
