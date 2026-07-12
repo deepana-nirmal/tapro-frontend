@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -23,6 +25,9 @@
   }
 
   html {
+    min-width: 0;
+    min-height: 100%;
+    overflow-x: clip;
     background:
       radial-gradient(circle at top left, rgba(16, 185, 129, 0.08), transparent 24%),
       linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
@@ -30,8 +35,11 @@
 
   body {
     margin: 0;
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: var(--font-sans);
+    min-width: 0;
     min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: clip;
     background:
       radial-gradient(circle at top left, rgba(16, 185, 129, 0.08), transparent 22%),
       radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 20%),
@@ -39,6 +47,10 @@
     color: var(--text-main);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+
+  body:has([aria-modal='true']) {
+    overflow: hidden;
   }
 
   html.dark body {
@@ -60,6 +72,7 @@
 
   * {
     box-sizing: border-box;
+    min-width: 0;
   }
 
   *::selection {
@@ -74,6 +87,35 @@
 
   #root {
     min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  img,
+  video {
+    height: auto;
+  }
+
+  p,
+  a,
+  span,
+  td,
+  th,
+  label,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    overflow-wrap: anywhere;
   }
 
   .tapro-logo {
@@ -226,6 +268,19 @@
   select,
   textarea {
     font: inherit;
+    max-width: 100%;
+  }
+
+  :focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
+
+  button,
+  [role='button'] {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  input[type='file'] {
+    width: 100%;
   }
 }
 
@@ -259,6 +314,39 @@
     .landing-navbar {
       min-height: 84px;
       padding: 14px 18px;
+    }
+
+    .logo-box,
+    .brand-logo,
+    .navbar-brand,
+    .logo-wrapper,
+    .landing-brand,
+    .landing-logo {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .landing-footer-meta {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  @layer base {
+    .tapro-logo-md,
+    .tapro-logo-lg,
+    .tapro-logo-navbar,
+    .tapro-logo-hero {
+      width: 100%;
+      max-width: 220px;
+    }
+
+    .hero-pill,
+    .nav-cta,
+    .nav-login {
+      white-space: normal;
     }
   }
 }

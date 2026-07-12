@@ -11,9 +11,9 @@ import { defaultPathByRole } from '../utils/auth';
 import { UserRole } from '../types';
 
 const authWrapper = (title: string, description: string, children: ReactNode) => (
-  <div className="min-h-screen overflow-hidden bg-[linear-gradient(145deg,#f5f7f2_0%,#eef7f2_45%,#dfeee7_100%)] px-4 py-8 dark:bg-[linear-gradient(145deg,#08120f_0%,#0b1a16_45%,#12211d_100%)] sm:px-6 lg:px-8">
-    <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-      <div className="relative overflow-hidden rounded-[36px] border border-emerald-900/10 bg-[#123629] p-8 text-white shadow-[0_40px_120px_rgba(18,54,41,0.28)] dark:border-white/10 dark:bg-[#0d211a] sm:p-10 lg:p-12">
+  <div className="min-h-screen min-h-[100dvh] overflow-x-clip bg-[linear-gradient(145deg,#f5f7f2_0%,#eef7f2_45%,#dfeee7_100%)] px-3 py-4 dark:bg-[linear-gradient(145deg,#08120f_0%,#0b1a16_45%,#12211d_100%)] sm:px-6 sm:py-8 lg:px-8">
+    <div className="mx-auto grid min-h-[calc(100dvh-2rem)] max-w-7xl gap-4 sm:gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="relative overflow-hidden rounded-[28px] border border-emerald-900/10 bg-[#123629] p-5 text-white shadow-[0_40px_120px_rgba(18,54,41,0.28)] dark:border-white/10 dark:bg-[#0d211a] sm:rounded-[36px] sm:p-10 lg:p-12">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.18),_transparent_32%),radial-gradient(circle_at_bottom_left,_rgba(244,196,48,0.16),_transparent_28%)]" />
         <div className="relative flex h-full flex-col justify-between gap-8">
           <div>
@@ -23,10 +23,10 @@ const authWrapper = (title: string, description: string, children: ReactNode) =>
             <div className="mt-3 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-emerald-50/85 backdrop-blur">
               Restaurant OS
             </div>
-            <h1 className="mt-8 max-w-xl text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">{title}</h1>
+            <h1 className="mt-6 max-w-xl text-[clamp(2rem,9vw,3rem)] font-semibold tracking-[-0.05em] sm:mt-8">{title}</h1>
             <p className="mt-4 max-w-xl text-sm leading-7 text-emerald-50/78 sm:text-base">{description}</p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="hidden gap-4 sm:grid sm:grid-cols-3">
             {[
               ['Orders in motion', 'Live kitchen, cashier, and floor coordination from one workspace.'],
               ['Restaurant-aware access', 'Each login lands in the right operational surface for that role.'],
@@ -166,7 +166,7 @@ export const LoginPage = () => {
         {error ? (
           <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>
         ) : null}
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex flex-col gap-3 text-sm min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
           <a className="text-teal-600 dark:text-teal-300" href="/forgot-password">Forgot password?</a>
           <a className="text-teal-600 dark:text-teal-300" href="/register">Customer register</a>
         </div>
@@ -196,7 +196,7 @@ export const RegisterPage = () => {
   return authWrapper(
     'Register',
     'Customer self-service account creation',
-    <Card className="p-8">
+    <Card className="p-4 sm:p-8">
       <PageHeader title="Create account" description="Customers can register directly. Staff accounts should come through invitations." />
       <form className="mt-8 space-y-4" onSubmit={onSubmit}>
         <Input label="Email" type="email" autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
@@ -215,7 +215,7 @@ export const ForgotPasswordPage = () => {
   return authWrapper(
     'Forgot Password',
     'Password reset request flow',
-    <Card className="p-8">
+    <Card className="p-4 sm:p-8">
       <PageHeader title="Forgot Password" description="This will call the backend endpoint when it exists; demo mode keeps the frontend flow testable." />
       <form
         className="mt-8 space-y-4"
@@ -238,7 +238,7 @@ export const ResetPasswordPage = () => {
   return authWrapper(
     'Reset Password',
     'Token-based password reset',
-    <Card className="p-8">
+    <Card className="p-4 sm:p-8">
       <PageHeader title="Reset Password" description="Reset tokens are read from the `token` query string." />
       <form
         className="mt-8 space-y-4"
@@ -260,7 +260,7 @@ export const ChangePasswordPage = () => {
   return authWrapper(
     'Change Password',
     'Authenticated password rotation',
-    <Card className="p-8">
+    <Card className="p-4 sm:p-8">
       <PageHeader title="Change Password" description="Useful for owners, managers, and cashiers after first login." />
       <form
         className="mt-8 space-y-4"
@@ -286,7 +286,7 @@ export const AcceptInvitationPage = () => {
   return authWrapper(
     'Accept Invitation',
     'Token validation and account activation',
-    <Card className="p-8">
+    <Card className="p-4 sm:p-8">
       <PageHeader title="Activate Invitation" description={`Invitation token: ${token}`} />
       <form
         className="mt-8 space-y-4"

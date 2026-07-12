@@ -539,8 +539,8 @@ export const SuperAdminUsersManagementPage = () => {
       </div>
 
       {modalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
-          <Card className="w-full max-w-2xl p-6">
+        <div role="dialog" aria-modal="true" aria-label={editingUser ? 'Edit user' : 'Create user'} className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/45 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Card className="my-auto max-h-[calc(100dvh-24px)] w-full max-w-2xl overflow-y-auto p-4 sm:p-6">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-xl font-semibold text-slate-950 dark:text-white">{editingUser ? 'Edit user' : 'Create user'}</h2>
               <Button variant="ghost" onClick={() => setModalOpen(false)}>Close</Button>

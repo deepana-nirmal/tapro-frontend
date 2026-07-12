@@ -110,6 +110,22 @@ export const CategoryWorkspace = ({
     }
   }, [categories, selectedCategoryId]);
 
+  useEffect(() => {
+    if (!editingMenuItemId) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setEditingMenuItemId(null);
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [editingMenuItemId]);
+
   const selectedCategory = useMemo(
     () => categories?.find((category) => category.id === selectedCategoryId) || null,
     [categories, selectedCategoryId]
@@ -571,12 +587,13 @@ export const CategoryWorkspace = ({
           </div>
 
           {editingMenuItemId ? (
-            <div className="mt-6 rounded-3xl border border-slate-200 p-4 dark:border-slate-800">
-              <div className="flex items-center justify-between gap-3">
-                <h4 className="text-lg font-semibold text-slate-950 dark:text-white">Edit Menu Item</h4>
+            <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/45 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <div role="dialog" aria-modal="true" aria-labelledby="category-edit-menu-item-title" className="my-auto max-h-[calc(100dvh-24px)] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-4 shadow-panel dark:border-slate-800 dark:bg-slate-900 dark:shadow-panel-dark">
+                <div className="flex items-center justify-between gap-3">
+                <h4 id="category-edit-menu-item-title" className="text-lg font-semibold text-slate-950 dark:text-white">Edit Menu Item</h4>
                 <Button variant="ghost" onClick={() => setEditingMenuItemId(null)}>Close</Button>
-              </div>
-              <div className="mt-4">
+                </div>
+                <div className="mt-4">
                 {renderMenuItemForm(
                   editMenuItem,
                   setEditMenuItem,
@@ -587,6 +604,7 @@ export const CategoryWorkspace = ({
                   'Save changes',
                   submitEditMenuItem
                 )}
+                </div>
               </div>
             </div>
           ) : null}
