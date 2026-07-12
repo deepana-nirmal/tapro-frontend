@@ -45,3 +45,28 @@ export const normalizeAuthError = (error: unknown, fallback = 'We could not comp
 
   return raw && raw.length < 160 && !/[{};]/.test(raw) ? raw : fallback;
 };
+
+export const normalizeApiError = (error: unknown, fallback = 'We could not complete the request. Please try again.') => {
+  const axiosError = error as AxiosError<ErrorPayload>;
+
+  if (axiosError.code === 'ECONNABORTED') {
+    return 'The request timed out. Check your connection and try again.';
+  }
+
+  if (!axiosError.response) {
+    return axiosError instanceof Error && axiosError.message ? axiosError.message : fallback;
+  }
+
+  const payload = axiosError.response.data;
+
+  if (typeof payload === 'string') {
+    return payload || fallback;
+  }
+
+  if (payload?.errors) {
+    const first = Object.values(payload.errors).flat()[0];
+    if (first) return first;
+  }
+
+  return payload?.message || payload?.error || axiosError.message || fallback;
+};

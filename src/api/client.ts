@@ -30,6 +30,12 @@ export const publicApiClient = axios.create({
 
 apiClient.interceptors.request.use((config) => {
   const { token, user } = getStoredSession();
+  const isMultipartRequest = typeof FormData !== 'undefined' && config.data instanceof FormData;
+
+  if (isMultipartRequest && config.headers) {
+    delete (config.headers as Record<string, unknown>)['Content-Type'];
+  }
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   } else if (config.headers.Authorization) {

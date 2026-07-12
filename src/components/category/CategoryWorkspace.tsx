@@ -7,6 +7,7 @@ import { ImageWithFallback, initialsFromName } from '../shared/ImageWithFallback
 import { Button, Card, EmptyState, Input, Select, StatusBadge, Textarea } from '../ui';
 import { formatCurrency } from '../../utils/format';
 import { validateImageFile } from '../../utils/upload';
+import { normalizeApiError } from '../../utils/errorMessages';
 
 type WorkspaceMode = 'OWNER' | 'SUPER_ADMIN';
 
@@ -260,7 +261,7 @@ export const CategoryWorkspace = ({
       refetch();
       toast.success('Menu item created');
     } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message || 'Unable to create menu item.';
+      const message = normalizeApiError(error, 'Unable to create menu item.');
       setMenuCreateError(message);
       toast.error(message);
     } finally {
@@ -307,7 +308,7 @@ export const CategoryWorkspace = ({
       refetch();
       toast.success('Menu item updated');
     } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message || 'Unable to update menu item.';
+      const message = normalizeApiError(error, 'Unable to update menu item.');
       setMenuEditError(message);
       toast.error(message);
     } finally {
