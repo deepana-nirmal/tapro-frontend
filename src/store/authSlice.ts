@@ -2,6 +2,8 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { authService } from '../api/services';
 import { AuthResponse, LoginCredentials, SessionUser } from '../types';
 import { buildSessionUser, isTokenExpired } from '../utils/auth';
+import { getStoredSession } from '../utils/authStorage';
+import { normalizeAuthError } from '../utils/errorMessages';
 
 interface AuthState {
   token: string | null;
@@ -12,9 +14,7 @@ interface AuthState {
 }
 
 const getStoredState = (): Pick<AuthState, 'token' | 'user' | 'isAuthenticated'> => {
-  const token = localStorage.getItem('tapro_token');
-  const userJson = localStorage.getItem('tapro_user');
-  const storedUser = userJson ? (JSON.parse(userJson) as SessionUser) : null;
+  const { token, user: storedUser } = getStoredSession();
 
   if (!token || isTokenExpired(token)) {
     authService.logout();
@@ -39,12 +39,8 @@ export const login = createAsyncThunk<AuthResponse, LoginCredentials, { rejectVa
   async (credentials, { rejectWithValue }) => {
     try {
       return await authService.login(credentials);
-    } catch (error: any) {
-      if (!error.response) {
-        return rejectWithValue('Backend is not reachable. Check REACT_APP_API_URL for deployed environments.');
-      }
-
-      return rejectWithValue(error.response?.data?.message || 'Unable to sign in');
+    } catch (error) {
+      return rejectWithValue(normalizeAuthError(error, 'Unable to sign in.'));
     }
   }
 );
