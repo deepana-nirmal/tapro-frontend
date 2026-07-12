@@ -113,6 +113,7 @@ const AppRoutes = () => {
             <Route path="/owner" element={<OwnerDashboardPage />} />
             <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
             <Route path="/owner/profile" element={<RestaurantProfilePage />} />
+            <Route path="/owner/settings" element={<RestaurantProfilePage />} />
             <Route path="/owner/staff" element={<StaffManagementPage />} />
             <Route path="/owner/tables" element={<TableManagementPage />} />
             <Route path="/owner/categories" element={<CategoryManagementPage />} />

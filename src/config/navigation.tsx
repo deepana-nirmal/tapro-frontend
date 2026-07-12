@@ -27,7 +27,7 @@ export const navigationByRole: Record<UserRole, NavItem[]> = {
   ],
   RESTAURANT_OWNER: [
     { label: 'Overview', path: '/owner', icon: icon(LayoutDashboard), description: 'Restaurant health' },
-    { label: 'Profile', path: '/owner/profile', icon: icon(Store), description: 'Brand and hours' },
+    { label: 'Restaurant Settings', path: '/owner/settings', icon: icon(Store), description: 'Brand and public details' },
     { label: 'Staff', path: '/owner/staff', icon: icon(Users), description: 'Invite and disable staff' },
     { label: 'Tables', path: '/owner/tables', icon: icon(QrCode), description: 'QR and seating' },
     { label: 'Categories', path: '/owner/categories', icon: icon(MenuSquare), description: 'Menu categories' },
