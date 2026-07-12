@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, ErrorBoundary } from './components/ui';
 import { store } from './store';
 import { useAppDispatch, useAppSelector } from './hooks';
 import { restoreSession } from './store/authSlice';
@@ -155,7 +155,7 @@ const AppRoutes = () => {
 const App = () => (
   <Provider store={store}>
     <BrowserRouter>
-      <AppRoutes />
+      <ErrorBoundary><AppRoutes /></ErrorBoundary>
       <Toaster
         position="top-right"
         containerStyle={{ top: 'max(12px, env(safe-area-inset-top))', left: 12, right: 12 }}
