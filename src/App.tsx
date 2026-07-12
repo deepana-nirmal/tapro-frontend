@@ -16,7 +16,7 @@ import {
   ResetPasswordPage,
 } from './pages/auth';
 import { AcceptInvitationPage, AdminInvitationsPage } from './pages/invitations';
-import { CheckoutPage, RestaurantMenuPage, TrackOrderPage } from './pages/public';
+import { CheckoutPage, RestaurantMenuPage, TrackOrderPage } from './pages/customerOrdering';
 import { LandingPage } from './pages/LandingPage';
 import { PrivacyPolicyPage, TermsPage } from './pages/legal';
 import {

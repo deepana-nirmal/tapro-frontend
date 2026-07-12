@@ -340,4 +340,7 @@ export interface CartLine {
   name: string;
   price: number;
   quantity: number;
+  imageUrl?: string;
+  categoryName?: string;
+  currencyCode?: CurrencyCode;
 }
