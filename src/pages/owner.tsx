@@ -7,6 +7,7 @@ import { useAppSelector, useAsyncResource } from '../hooks';
 import { ImageWithFallback, initialsFromName } from '../components/shared/ImageWithFallback';
 import { Button, Card, DataTable, FileUploader, Input, LoadingBlock, OrderItemsList, PageHeader, Select, StatusBadge, Textarea } from '../components/ui';
 import { OwnerAlert, OwnerFilterBar, OwnerMetricCard, OwnerPageHeader, OwnerQuickAction } from '../components/owner/OwnerWorkspace';
+import { BarChartCard, DonutSummaryCard, ReportToolbar, exportCsv } from '../components/reports/ReportComponents';
 import { formatCurrency, formatDateTime } from '../utils/format';
 import { validateImageFile } from '../utils/upload';
 import { normalizeApiError } from '../utils/errorMessages';
@@ -202,9 +203,8 @@ export const RestaurantProfilePage = () => {
             label={logoUploading ? 'Uploading logo...' : 'Upload Logo'}
             accept="image/png,image/jpeg,image/webp"
             disabled={logoUploading}
-            onChange={async (event) => {
-              const file = event.target.files?.[0];
-              event.target.value = '';
+            uploading={logoUploading}
+            onFileSelect={async (file) => {
               if (!file) {
                 return;
               }
@@ -1000,7 +1000,7 @@ export const MenuItemsManagementPage = () => {
             {!categories?.length ? <p className="text-sm text-amber-600">No categories yet. Create a category first.</p> : null}
             <Textarea label="Ingredients" value={form.ingredients} onChange={(event) => setForm({ ...form, ingredients: event.target.value })} placeholder="Tomato, Basil, Olive oil" />
             <Textarea label="Allergens" value={form.allergens} onChange={(event) => setForm({ ...form, allergens: event.target.value })} placeholder="Dairy, Nuts" />
-            <FileUploader label="Image Upload" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => setCreateImageFile(event.target.files?.[0] || null)} description={createImageFile?.name} />
+            <FileUploader label="Image Upload" accept="image/png,image/jpeg,image/webp,image/gif" onFileSelect={setCreateImageFile} description={createImageFile?.name} />
             <Select label="Status" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN' })}>
               <option value="AVAILABLE">Available</option>
               <option value="OUT_OF_STOCK">Out Of Stock</option>
@@ -1109,7 +1109,7 @@ export const MenuItemsManagementPage = () => {
               </Select>
               <Textarea label="Ingredients" value={editForm.ingredients} onChange={(event) => setEditForm({ ...editForm, ingredients: event.target.value })} />
               <Textarea label="Allergens" value={editForm.allergens} onChange={(event) => setEditForm({ ...editForm, allergens: event.target.value })} />
-              <FileUploader label="Replace Image" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => setEditImageFile(event.target.files?.[0] || null)} description={editImageFile?.name} />
+              <FileUploader label="Replace Image" accept="image/png,image/jpeg,image/webp,image/gif" onFileSelect={setEditImageFile} description={editImageFile?.name} />
               <Select label="Status" value={editForm.status} onChange={(event) => setEditForm({ ...editForm, status: event.target.value as 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN' })}>
                 <option value="AVAILABLE">Available</option>
                 <option value="OUT_OF_STOCK">Out Of Stock</option>
@@ -1292,10 +1292,43 @@ export const OwnerReportsPage = () => {
     );
   }
 
+  const revenuePoints = [
+    { label: 'Today', value: analytics.revenue.today },
+    { label: 'This week', value: analytics.revenue.week },
+    { label: 'This month', value: analytics.revenue.month },
+  ];
+  const orderPoints = [
+    { label: 'Today', value: analytics.orders.today },
+    { label: 'This week', value: analytics.orders.week },
+    { label: 'This month', value: analytics.orders.month },
+  ];
+  const peakHourPoints = analytics.peakOrderingHours.map((point) => ({ label: `${String(point.hour).padStart(2, '0')}:00`, value: point.orderCount }));
+
   return (
     <div className="space-y-6">
       <OwnerPageHeader title="Restaurant Reports" description="Real backend revenue, order volume, item performance, and ordering hour trends." />
-      <OwnerAlert title="Report definitions">Revenue and average order value come from the owner analytics endpoint and exclude cancelled orders where the backend excludes them. Export is not shown because no owner export endpoint exists.</OwnerAlert>
+      <OwnerAlert title="Report definitions">Revenue and average order value come from the owner analytics endpoint and exclude cancelled orders where the backend excludes them. CSV exports are generated client-side from the currently loaded backend analytics.</OwnerAlert>
+      <ReportToolbar>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Filters</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Current backend analytics snapshot. Backend custom date-range reporting is not exposed yet.</p>
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => exportCsv('owner-analytics-summary.csv', [
+            { metric: 'Revenue today', value: analytics.revenue.today },
+            { metric: 'Revenue week', value: analytics.revenue.week },
+            { metric: 'Revenue month', value: analytics.revenue.month },
+            { metric: 'Orders today', value: analytics.orders.today },
+            { metric: 'Orders week', value: analytics.orders.week },
+            { metric: 'Orders month', value: analytics.orders.month },
+            { metric: 'Average order value', value: analytics.averageOrderValue },
+          ])}
+        >
+          Export Summary CSV
+        </Button>
+      </ReportToolbar>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <OwnerMetricCard label="Revenue Today" value={formatCurrency(analytics.revenue.today, currencyCode)} helper="Revenue booked since midnight" tone="emerald" />
         <OwnerMetricCard label="Revenue This Week" value={formatCurrency(analytics.revenue.week, currencyCode)} helper="Revenue booked since Monday" tone="blue" />
@@ -1316,6 +1349,12 @@ export const OwnerReportsPage = () => {
           <p className="mt-3 text-3xl font-semibold text-slate-950 dark:text-white">{analytics.orders.month}</p>
         </Card>
       </div>
+      <div className="grid gap-6 xl:grid-cols-3">
+        <BarChartCard title="Revenue Trend" description="Today, week, and month revenue from backend analytics." points={revenuePoints} valueFormatter={(value) => formatCurrency(value, currencyCode)} exportFilename="owner-revenue-trend.csv" />
+        <BarChartCard title="Orders Trend" description="Order volume across the available backend periods." points={orderPoints} exportFilename="owner-orders-trend.csv" />
+        <BarChartCard title="Peak Hours" description="Busiest ordering windows." points={peakHourPoints} exportFilename="owner-peak-hours.csv" />
+      </div>
+      <DonutSummaryCard title="Order Period Distribution" points={orderPoints} />
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <h3 className="text-lg font-semibold text-slate-950 dark:text-white">Top Selling Items</h3>

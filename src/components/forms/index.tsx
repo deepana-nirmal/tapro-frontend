@@ -1,12 +1,16 @@
 import {
   ButtonHTMLAttributes,
+  ChangeEvent,
+  DragEvent,
   forwardRef,
   InputHTMLAttributes,
   PropsWithChildren,
   ReactNode,
+  useEffect,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
   useId,
+  useState,
 } from 'react';
 import { Loader2, UploadCloud, X } from 'lucide-react';
 import { classNames } from '../ui/utils';
@@ -225,30 +229,127 @@ export const Switch = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInput
 
 export const SwitchInput = Switch;
 
-export const FileUploader = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & CommonFieldProps & { previewUrl?: string; onRemove?: () => void }>(
-  ({ label, error, description, success, id: given, previewUrl, onRemove, ...props }, ref) => {
+const imageTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+const maxImageSize = 5 * 1024 * 1024;
+const formatFileSize = (size: number) => `${(size / 1024 / 1024).toFixed(size >= 1024 * 1024 ? 1 : 2)} MB`;
+
+export const FileUploader = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & CommonFieldProps & {
+  previewUrl?: string;
+  onRemove?: () => void;
+  onFileSelect?: (file: File | null) => void;
+  uploading?: boolean;
+  progress?: number;
+}>(
+  ({ label, error, description, success, id: given, previewUrl, onRemove, onFileSelect, uploading, progress, accept = imageTypes.join(','), ...props }, ref) => {
     const auto = useId();
     const id = given || auto;
+    const [dragging, setDragging] = useState(false);
+    const [localError, setLocalError] = useState('');
+    const [fileMeta, setFileMeta] = useState<{ name: string; size: string; dimensions?: string; preview?: string } | null>(null);
+    const visibleError = error || localError;
+
+    useEffect(() => () => {
+      if (fileMeta?.preview) URL.revokeObjectURL(fileMeta.preview);
+    }, [fileMeta?.preview]);
+
+    const validateFile = (file: File | null) => {
+      if (!file) return null;
+      if (!imageTypes.includes(file.type)) return 'Use a JPG, PNG, WEBP, or GIF image.';
+      if (file.size > maxImageSize) return 'Use an image under 5MB.';
+      return null;
+    };
+
+    const setSelectedFile = (file: File | null) => {
+      const validationMessage = validateFile(file);
+      setLocalError(validationMessage || '');
+      if (!file || validationMessage) {
+        setFileMeta(null);
+        onFileSelect?.(null);
+        return;
+      }
+
+      const objectUrl = URL.createObjectURL(file);
+      setFileMeta({ name: file.name, size: formatFileSize(file.size), preview: objectUrl });
+      const image = new Image();
+      image.onload = () => setFileMeta((current) => current ? { ...current, dimensions: `${image.naturalWidth} × ${image.naturalHeight}px` } : current);
+      image.onerror = () => setLocalError('This image could not be previewed. Try another file.');
+      image.src = objectUrl;
+      onFileSelect?.(file);
+    };
+
+    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+      if ((event.target.files?.length || 0) > 1) {
+        setLocalError('Select one image at a time.');
+        onFileSelect?.(null);
+        return;
+      }
+      setSelectedFile(event.target.files?.[0] || null);
+      props.onChange?.(event);
+    };
+
+    const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+      event.preventDefault();
+      setDragging(false);
+      if (props.disabled) return;
+      if (event.dataTransfer.files.length > 1) {
+        setLocalError('Select one image at a time.');
+        onFileSelect?.(null);
+        return;
+      }
+      setSelectedFile(event.dataTransfer.files[0] || null);
+    };
+
+    const removeFile = () => {
+      setLocalError('');
+      setFileMeta(null);
+      onFileSelect?.(null);
+      onRemove?.();
+    };
+
+    const activePreview = previewUrl || fileMeta?.preview;
+
     return (
-      <FormField id={id} label={label} required={props.required} description={description} error={error} success={success}>
-        <div className="grid gap-3 rounded-2xl border border-dashed border-slate-300 p-4 dark:border-slate-700">
-          {previewUrl ? <img src={previewUrl} alt="" className="h-28 w-full rounded-xl object-cover" /> : null}
-          <label htmlFor={id} className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-5 text-center text-sm text-slate-600 transition hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
+      <FormField id={id} label={label} required={props.required} description={description || fileMeta?.name} error={visibleError} success={success}>
+        <div className={classNames('grid gap-3 rounded-2xl border border-dashed p-4 transition', dragging ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20' : 'border-slate-300 dark:border-slate-700')}>
+          {activePreview ? <img src={activePreview} alt="" className="h-36 w-full rounded-xl object-cover" /> : null}
+          <label
+            htmlFor={id}
+            onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            className="flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-5 text-center text-sm text-slate-600 transition hover:bg-slate-100 focus-within:ring-4 focus-within:ring-emerald-600/15 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
             <UploadCloud aria-hidden className="h-6 w-6" />
-            <span className="font-medium">Choose file</span>
-            <span className="text-xs text-slate-500">PNG, JPG, WEBP, or GIF up to the configured limit.</span>
+            <span className="font-medium">{dragging ? 'Drop image here' : 'Drag image here or browse'}</span>
+            <span className="text-xs text-slate-500">PNG, JPG, WEBP, or GIF. One image, up to 5MB.</span>
           </label>
           <input
             {...props}
             ref={ref}
             id={id}
             type="file"
-            aria-invalid={!!error}
-            aria-describedby={describedBy(id, description, error, success, props['aria-describedby'])}
+            accept={accept}
+            aria-invalid={!!visibleError}
+            aria-describedby={describedBy(id, description || fileMeta?.name, visibleError, success, props['aria-describedby'])}
+            onChange={handleChange}
             className="sr-only"
           />
-          {onRemove ? (
-            <button type="button" onClick={onRemove} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+          {fileMeta ? (
+            <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-900 dark:text-slate-300">
+              <div className="font-medium text-slate-800 dark:text-slate-100">{fileMeta.name}</div>
+              <div>{fileMeta.size}{fileMeta.dimensions ? ` • ${fileMeta.dimensions}` : ''}</div>
+            </div>
+          ) : null}
+          {typeof progress === 'number' || uploading ? (
+            <div aria-live="polite" className="grid gap-1 text-xs text-slate-500">
+              <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                <div className="h-full rounded-full bg-emerald-600 transition-all" style={{ width: `${Math.max(8, Math.min(progress ?? 40, 100))}%` }} />
+              </div>
+              <span>{uploading ? 'Uploading image…' : `Upload ${progress}% complete`}</span>
+            </div>
+          ) : null}
+          {onRemove || fileMeta ? (
+            <button type="button" onClick={removeFile} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
               <X aria-hidden className="h-4 w-4" />
               Remove
             </button>

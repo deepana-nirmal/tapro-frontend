@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { categoryService, menuService } from '../../api/services';
 import { useAsyncResource } from '../../hooks';
@@ -395,7 +395,7 @@ export const CategoryWorkspace = ({
       <FileUploader
         label="Image Upload"
         accept="image/png,image/jpeg,image/webp,image/gif"
-        onChange={(event: ChangeEvent<HTMLInputElement>) => setImageFile(event.target.files?.[0] || null)}
+        onFileSelect={setImageFile}
         description={imageFile?.name}
       />
       {error ? <p className="md:col-span-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
@@ -429,7 +429,7 @@ export const CategoryWorkspace = ({
           <FileUploader
             label="Category Image"
             accept="image/png,image/jpeg,image/webp"
-            onChange={(event: ChangeEvent<HTMLInputElement>) => setCategoryImageFile(event.target.files?.[0] || null)}
+            onFileSelect={setCategoryImageFile}
           />
           {categoryError ? <p className="md:col-span-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{categoryError}</p> : null}
           <div className="md:col-span-2">
@@ -504,7 +504,7 @@ export const CategoryWorkspace = ({
               <FileUploader
                 label="Update Category Image"
                 accept="image/png,image/jpeg,image/webp"
-                onChange={(event: ChangeEvent<HTMLInputElement>) => setCategoryImageFile(event.target.files?.[0] || null)}
+                onFileSelect={setCategoryImageFile}
                 description={categoryImageFile?.name}
               />
             </div>
