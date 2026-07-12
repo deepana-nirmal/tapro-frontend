@@ -9,6 +9,7 @@ import { setDarkMode } from './store/uiSlice';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AppShell from './components/layout/AppShell';
 import { LoadingBlock } from './components/ui';
+import { OfflineBanner } from './components/shared/OfflineBanner';
 
 const lazyPage = <T extends Record<string, any>, K extends keyof T>(loader: () => Promise<T>, exportName: K) =>
   lazy(() => loader().then((module) => ({ default: module[exportName] as any })));
@@ -166,6 +167,7 @@ const App = () => (
   <Provider store={store}>
     <BrowserRouter>
       <ErrorBoundary><AppRoutes /></ErrorBoundary>
+      <OfflineBanner />
       <Toaster
         position="top-right"
         containerStyle={{ top: 'max(12px, env(safe-area-inset-top))', left: 12, right: 12 }}
