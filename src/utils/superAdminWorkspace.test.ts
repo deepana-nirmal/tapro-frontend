@@ -1,5 +1,5 @@
 import { Restaurant, SuperAdminUser } from '../types';
-import { filterRestaurantsForSuperAdmin, summarizePlatform } from './superAdminWorkspace';
+import { filterRestaurantsForSuperAdmin, safeHealthStatus, summarizePlatform, summarizeSubscriptions } from './superAdminWorkspace';
 
 const restaurant = (overrides: Partial<Restaurant>): Restaurant => ({
   id: 1,
@@ -56,5 +56,26 @@ describe('superAdminWorkspace utilities', () => {
     expect(filterRestaurantsForSuperAdmin(restaurants, { search: 'bistro', status: 'SUSPENDED', currency: 'USD' }))
       .toEqual([restaurants[1]]);
   });
-});
 
+  it('summarizes subscription status without inventing missing plan revenue', () => {
+    expect(summarizeSubscriptions(
+      [{ id: 'growth', name: 'Growth', price: 49, billingCycle: 'MONTHLY', features: [], active: true }],
+      [
+        { id: '1', restaurantName: 'Cafe', planName: 'Growth', status: 'ACTIVE', renewalDate: '2026-01-01' },
+        { id: '2', restaurantName: 'Bistro', planName: 'Unknown', status: 'ACTIVE', renewalDate: '2026-01-01' },
+        { id: '3', restaurantName: 'Trial', planName: 'Growth', status: 'TRIAL', renewalDate: '2026-01-01' },
+      ]
+    )).toMatchObject({
+      activeSubscriptions: 2,
+      trialSubscriptions: 1,
+      knownActiveRevenue: 49,
+      subscriptionsMissingPricing: 1,
+    });
+  });
+
+  it('maps safe platform health statuses', () => {
+    expect(safeHealthStatus('UP')).toBe('Operational');
+    expect(safeHealthStatus('DOWN')).toBe('Unavailable');
+    expect(safeHealthStatus(undefined)).toBe('Unknown');
+  });
+});

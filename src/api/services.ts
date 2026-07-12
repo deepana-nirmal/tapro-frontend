@@ -622,6 +622,13 @@ export const reportingService = {
   orderAnalytics: () => withFallback(apiClient.get<ReportPoint[]>('/reports/order-analytics'), mockReportSeries),
 };
 
+export const platformHealthService = {
+  async getHealth(): Promise<{ status?: string; service?: string }> {
+    const response = await publicApiClient.get<{ status?: string; service?: string }>('/health');
+    return response.data;
+  },
+};
+
 export const dashboardService = {
   async superAdminMetrics(): Promise<DashboardMetric[]> {
     const response = await apiClient.get<ApiEnvelope<DashboardMetric[]> | DashboardMetric[]>('/super-admin/dashboard');

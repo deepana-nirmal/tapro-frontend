@@ -1,17 +1,17 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useParams } from 'react-router-dom';
-import { dashboardService, reportingService, restaurantService, subscriptionService, superAdminRestaurantService, superAdminUserService } from '../api/services';
+import { dashboardService, platformHealthService, reportingService, restaurantService, subscriptionService, superAdminRestaurantService, superAdminUserService } from '../api/services';
 import { CategoryWorkspace } from '../components/category/CategoryWorkspace';
 import { ImageWithFallback, initialsFromName } from '../components/shared/ImageWithFallback';
 import { useAsyncResource } from '../hooks';
 import { Button, Card, DataTable, Input, LoadingBlock, OrderItemsList, PageHeader, Select, StatCard, StatusBadge, Textarea } from '../components/ui';
-import { OwnerFilterBar, OwnerMetricCard } from '../components/owner/OwnerWorkspace';
+import { OwnerAlert, OwnerFilterBar, OwnerMetricCard } from '../components/owner/OwnerWorkspace';
 import { formatCurrency, formatDateTime } from '../utils/format';
 import { validateImageFile } from '../utils/upload';
 import { AdminInvitationsPage } from './invitations';
 import { BackendRole, CurrencyCode, Restaurant, RestaurantFormValues, SuperAdminUser, SuperAdminUserRequest, UsersByRestaurantGroup } from '../types';
-import { filterRestaurantsForSuperAdmin, summarizePlatform } from '../utils/superAdminWorkspace';
+import { filterRestaurantsForSuperAdmin, safeHealthStatus, summarizePlatform, summarizeSubscriptions } from '../utils/superAdminWorkspace';
 
 const manageableRoles: Array<{ value: Extract<BackendRole, 'OWNER' | 'STAFF' | 'KITCHEN'>; label: string }> = [
   { value: 'OWNER', label: 'Owner' },
@@ -631,6 +631,7 @@ export const InvitationManagementPage = () => {
 export const SubscriptionManagementPage = () => {
   const { data: plans, setData } = useAsyncResource(() => subscriptionService.plans(), []);
   const { data: subscriptions } = useAsyncResource(() => subscriptionService.subscriptions(), []);
+  const subscriptionSummary = summarizeSubscriptions(plans || [], subscriptions || []);
   const [form, setForm] = useState<{
     id: string;
     name: string;
@@ -657,6 +658,13 @@ export const SubscriptionManagementPage = () => {
   return (
     <div className="space-y-6">
       <PageHeader title="Subscriptions" description="Create plans, assign billing tiers, and watch active subscriptions." />
+      <OwnerAlert title="Subscription data boundary">This page uses the current subscription plan/list APIs. Payment history, failed-payment state, and authoritative MRR are not exposed by the backend, so they are not shown as operational facts.</OwnerAlert>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <OwnerMetricCard label="Active subscriptions" value={subscriptionSummary.activeSubscriptions} helper="Subscriptions with ACTIVE status." tone="emerald" />
+        <OwnerMetricCard label="Trial subscriptions" value={subscriptionSummary.trialSubscriptions} helper="Trial status from the subscription model." tone="blue" />
+        <OwnerMetricCard label="Expired subscriptions" value={subscriptionSummary.expiredSubscriptions} helper="Expired status from the subscription model." tone="rose" />
+        <OwnerMetricCard label="Known active plan value" value={formatCurrency(subscriptionSummary.knownActiveRevenue)} helper={`${subscriptionSummary.subscriptionsMissingPricing} active subscription(s) missing matching plan pricing.`} tone="amber" />
+      </div>
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <form className="grid gap-4" onSubmit={submit}>
@@ -722,6 +730,7 @@ export const PlatformReportsPage = () => {
   return (
     <div className="space-y-6">
       <PageHeader title="Platform Reports" description="Revenue statistics, restaurant growth, and order analytics." />
+      <OwnerAlert title="Report API boundary">The current reporting services are integration points. Treat these reports as available only when the backend reporting endpoints are configured with real data; no CSV/PDF export is shown without a supported export endpoint.</OwnerAlert>
       <div className="grid gap-6 xl:grid-cols-3">
         {([
           ['Platform Revenue', revenue],
@@ -745,30 +754,64 @@ export const PlatformReportsPage = () => {
   );
 };
 
-export const PlatformSettingsPage = () => (
-  <div className="space-y-6">
-    <PageHeader title="Platform Settings" description="SaaS-wide settings and audit logs." />
-    <div className="grid gap-6 xl:grid-cols-2">
-      <Card>
-        <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Platform Settings</h2>
-        <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-          <p>Configure platform branding, email sending domains, invoice rules, and tenant defaults.</p>
-          <p>These controls are ready for direct backend integration once the corresponding settings API is added.</p>
-        </div>
-      </Card>
-      <Card>
-        <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Audit Logs</h2>
-        <div className="mt-4 space-y-3">
-          {['Restaurant deleted', 'Plan assigned', 'Owner invitation resent'].map((entry) => (
-            <div key={entry} className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">
-              {entry}
+export const PlatformSettingsPage = () => {
+  const { data: health, loading, error, setData } = useAsyncResource(() => platformHealthService.getHealth(), []);
+  const [checkingHealth, setCheckingHealth] = useState(false);
+  const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (health) {
+      setLastCheckedAt(new Date());
+    }
+  }, [health]);
+
+  const refreshHealth = async () => {
+    setCheckingHealth(true);
+    try {
+      setData(await platformHealthService.getHealth());
+      setLastCheckedAt(new Date());
+    } catch {
+      toast.error('Unable to refresh platform health.');
+    } finally {
+      setCheckingHealth(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Platform Settings" description="Safe SaaS-wide settings, platform health, and audit-log integration status." />
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card>
+          <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Platform Health</h2>
+          <div className="mt-4 rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+            <p className="text-sm text-slate-500">Main API</p>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <StatusBadge value={loading ? 'CHECKING' : error ? 'UNAVAILABLE' : safeHealthStatus(health?.status)} />
+              <Button variant="ghost" loading={checkingHealth} onClick={refreshHealth}>Refresh</Button>
             </div>
-          ))}
-        </div>
-      </Card>
+            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+              {health?.service || 'Tapro backend health endpoint'} · {lastCheckedAt ? `Last checked ${lastCheckedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Not checked yet'}
+            </p>
+            {error ? <p className="mt-3 text-sm text-rose-600">Health check failed or is not available to this browser session.</p> : null}
+          </div>
+        </Card>
+        <Card>
+          <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Platform Settings</h2>
+          <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+            <p>No browser-editable platform settings endpoint is currently exposed.</p>
+            <p>Secrets, SMTP credentials, billing keys, environment variables, and infrastructure configuration are intentionally not exposed in the frontend.</p>
+          </div>
+        </Card>
+        <Card className="xl:col-span-2">
+          <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Audit Logs</h2>
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            No audit-log endpoint was found in the backend. A production audit log should provide safe actor, action, entity, result, and timestamp fields without exposing passwords, tokens, request bodies, stack traces, or infrastructure secrets.
+          </div>
+        </Card>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const SuperAdminRestaurantDetailPage = () => {
   const { restaurantId = '1' } = useParams();

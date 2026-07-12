@@ -1,4 +1,4 @@
-import { Restaurant, SuperAdminUser } from '../types';
+import { Restaurant, Subscription, SubscriptionPlan, SuperAdminUser } from '../types';
 
 export const summarizePlatform = (restaurants: Restaurant[], users: SuperAdminUser[]) => ({
   totalRestaurants: restaurants.length,
@@ -27,3 +27,26 @@ export const filterRestaurantsForSuperAdmin = (
   });
 };
 
+export const summarizeSubscriptions = (plans: SubscriptionPlan[], subscriptions: Subscription[]) => {
+  const planPrice = new Map(plans.map((plan) => [plan.name, plan.price]));
+  const activeSubscriptions = subscriptions.filter((subscription) => subscription.status === 'ACTIVE');
+  const trialSubscriptions = subscriptions.filter((subscription) => subscription.status === 'TRIAL');
+  const expiredSubscriptions = subscriptions.filter((subscription) => subscription.status === 'EXPIRED');
+  const knownActiveRevenue = activeSubscriptions.reduce((sum, subscription) => sum + (planPrice.get(subscription.planName) || 0), 0);
+  const subscriptionsMissingPricing = activeSubscriptions.filter((subscription) => !planPrice.has(subscription.planName)).length;
+
+  return {
+    activeSubscriptions: activeSubscriptions.length,
+    trialSubscriptions: trialSubscriptions.length,
+    expiredSubscriptions: expiredSubscriptions.length,
+    knownActiveRevenue,
+    subscriptionsMissingPricing,
+  };
+};
+
+export const safeHealthStatus = (status?: string | null) => {
+  if (status === 'UP') return 'Operational';
+  if (status === 'DOWN') return 'Unavailable';
+  if (status === 'DEGRADED') return 'Degraded';
+  return 'Unknown';
+};
