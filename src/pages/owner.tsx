@@ -359,7 +359,7 @@ export const StaffManagementPage = () => {
                     setEmailError('');
                   }
                 }}
-                placeholder="staff@restaurant.com"
+                placeholder="team.member@example.com"
                 required
               />
               <Select label="Role" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as OwnerInvitationRole })}>

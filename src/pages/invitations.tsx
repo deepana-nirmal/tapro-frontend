@@ -237,7 +237,7 @@ export const AdminInvitationsPage = () => {
                 setEmailError('');
               }
             }}
-            placeholder="owner@restaurant.com"
+            placeholder="restaurant.contact@example.com"
             required
           />
           <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-100">
