@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { clearAuthSession, getStoredSession } from '../utils/authStorage';
+import { broadcastSessionExpired } from '../utils/sessionEvents';
 
 const developmentApiUrl = 'http://localhost:8080/api';
 const configuredApiUrl = process.env.REACT_APP_API_URL?.trim();
@@ -31,6 +32,8 @@ apiClient.interceptors.request.use((config) => {
   const { token, user } = getStoredSession();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else if (config.headers.Authorization) {
+    delete config.headers.Authorization;
   }
 
   if (user?.restaurantId) {
@@ -45,6 +48,8 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       clearAuthSession();
+      delete apiClient.defaults.headers.common.Authorization;
+      broadcastSessionExpired();
     }
 
     return Promise.reject(error);

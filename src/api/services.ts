@@ -191,6 +191,8 @@ export const authService = {
 
   logout() {
     clearAuthSession();
+    delete apiClient.defaults.headers.common.Authorization;
+    delete apiClient.defaults.headers.common['X-Tenant-ID'];
   },
 };
 
