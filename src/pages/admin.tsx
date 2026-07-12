@@ -7,6 +7,7 @@ import { ImageWithFallback, initialsFromName } from '../components/shared/ImageW
 import { useAsyncResource } from '../hooks';
 import { Button, Card, DataTable, FileUploader, Input, LoadingBlock, OrderItemsList, PageHeader, Select, StatCard, StatusBadge, Textarea } from '../components/ui';
 import { OwnerAlert, OwnerFilterBar, OwnerMetricCard } from '../components/owner/OwnerWorkspace';
+import { BarChartCard, ReportToolbar, exportCsv } from '../components/reports/ReportComponents';
 import { formatCurrency, formatDateTime } from '../utils/format';
 import { validateImageFile } from '../utils/upload';
 import { AdminInvitationsPage } from './invitations';
@@ -726,11 +727,36 @@ export const PlatformReportsPage = () => {
   const { data: revenue } = useAsyncResource(() => reportingService.platformRevenue(), []);
   const { data: growth } = useAsyncResource(() => reportingService.restaurantGrowth(), []);
   const { data: analytics } = useAsyncResource(() => reportingService.orderAnalytics(), []);
+  const revenuePoints = (revenue || []).map((point: any) => ({ label: point.label, value: Number(point.value || 0) }));
+  const growthPoints = (growth || []).map((point: any) => ({ label: point.label, value: Number(point.value || 0) }));
+  const orderPoints = (analytics || []).map((point: any) => ({ label: point.label, value: Number(point.value || 0) }));
 
   return (
     <div className="space-y-6">
       <PageHeader title="Platform Reports" description="Revenue statistics, restaurant growth, and order analytics." />
-      <OwnerAlert title="Report API boundary">The current reporting services are integration points. Treat these reports as available only when the backend reporting endpoints are configured with real data; no CSV/PDF export is shown without a supported export endpoint.</OwnerAlert>
+      <OwnerAlert title="Report API boundary">The current reporting services are integration points and use existing fallback behavior when backend reporting APIs are unavailable. CSV exports are generated from the currently loaded report data.</OwnerAlert>
+      <ReportToolbar>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Platform report filters</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Backend date-range and restaurant/category filter APIs are not exposed yet; this view exports the loaded report series.</p>
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => exportCsv('platform-reports.csv', [
+            ...revenuePoints.map((point) => ({ report: 'Platform Revenue', label: point.label, value: point.value })),
+            ...growthPoints.map((point) => ({ report: 'Restaurant Growth', label: point.label, value: point.value })),
+            ...orderPoints.map((point) => ({ report: 'Order Analytics', label: point.label, value: point.value })),
+          ])}
+        >
+          Export CSV
+        </Button>
+      </ReportToolbar>
+      <div className="grid gap-6 xl:grid-cols-3">
+        <BarChartCard title="Platform Revenue" points={revenuePoints} valueFormatter={(value) => formatCurrency(value)} exportFilename="platform-revenue.csv" />
+        <BarChartCard title="Restaurant Growth" points={growthPoints} exportFilename="restaurant-growth.csv" />
+        <BarChartCard title="Order Analytics" points={orderPoints} exportFilename="order-analytics.csv" />
+      </div>
       <div className="grid gap-6 xl:grid-cols-3">
         {([
           ['Platform Revenue', revenue],
