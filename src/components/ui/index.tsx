@@ -8,7 +8,7 @@ export const classNames = (...parts: Array<string | false | null | undefined>) =
 export const Card = ({ children, className = '' }: PropsWithChildren<{ className?: string }>) => (
   <div
     className={classNames(
-      'relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-panel dark:border-slate-800 dark:bg-slate-900 dark:shadow-panel-dark',
+      'relative min-w-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 shadow-panel dark:border-slate-800 dark:bg-slate-900 dark:shadow-panel-dark sm:p-5',
       'before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-emerald-200/70 before:to-transparent before:content-[""] dark:before:via-emerald-400/40',
       className
     )}
@@ -27,12 +27,12 @@ export const PageHeader = ({
   action?: ReactNode;
 }) => (
   <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-    <div>
+    <div className="min-w-0">
       <p className="text-xs font-medium uppercase tracking-[0.28em] text-emerald-600 dark:text-emerald-300">Tapro</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-slate-950 dark:text-white md:text-4xl">{title}</h1>
+      <h1 className="mt-2 text-[clamp(1.75rem,7vw,2.25rem)] font-semibold tracking-[-0.03em] text-slate-950 dark:text-white">{title}</h1>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">{description}</p>
     </div>
-    {action}
+    {action ? <div className="flex w-full flex-wrap gap-2 md:w-auto">{action}</div> : null}
   </div>
 );
 
@@ -53,7 +53,7 @@ export const Button = ({
 
   return (
     <button
-      className={classNames('inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-medium transition duration-200 disabled:cursor-not-allowed disabled:opacity-50', styles[variant], className)}
+      className={classNames('inline-flex min-h-11 max-w-full items-center justify-center whitespace-normal rounded-2xl px-4 py-2.5 text-center text-sm font-medium transition duration-200 disabled:cursor-not-allowed disabled:opacity-50', styles[variant], className)}
       {...props}
     >
       {children}
@@ -187,8 +187,8 @@ export const DataTable = <T,>({
   columns: Array<{ key: string; label: string; render: (row: T) => ReactNode }>;
   rows: T[];
 }) => (
-  <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-    <div className="overflow-x-auto">
+  <div className="min-w-0 overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div className="hidden overflow-x-auto md:block">
       <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
         <thead className="bg-slate-50 dark:bg-slate-900/80">
           <tr>
@@ -211,6 +211,18 @@ export const DataTable = <T,>({
           ))}
         </tbody>
       </table>
+    </div>
+    <div className="divide-y divide-slate-200 dark:divide-slate-800 md:hidden">
+      {rows.map((row, index) => (
+        <article key={index} className="space-y-3 p-4">
+          {columns.map((column) => (
+            <div key={column.key} className="grid min-w-0 grid-cols-[minmax(0,0.38fr)_minmax(0,0.62fr)] gap-3 text-sm">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">{column.label}</div>
+              <div className="min-w-0 text-slate-700 dark:text-slate-200">{column.render(row)}</div>
+            </div>
+          ))}
+        </article>
+      ))}
     </div>
   </div>
 );

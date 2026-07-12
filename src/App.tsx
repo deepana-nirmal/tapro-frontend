@@ -156,7 +156,11 @@ const App = () => (
   <Provider store={store}>
     <BrowserRouter>
       <AppRoutes />
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        containerStyle={{ top: 'max(12px, env(safe-area-inset-top))', left: 12, right: 12 }}
+        toastOptions={{ style: { maxWidth: 'min(420px, calc(100vw - 24px))', overflowWrap: 'anywhere' } }}
+      />
     </BrowserRouter>
   </Provider>
 );

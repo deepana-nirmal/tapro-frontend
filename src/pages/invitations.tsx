@@ -270,7 +270,7 @@ export const AdminInvitationsPage = () => {
       </Card>
       {isSuperAdmin ? (
         <Card>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
             <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Recent Invitations</h2>
             {invitationsLoading ? <span className="text-sm text-slate-400">Refreshing...</span> : null}
           </div>
@@ -418,7 +418,7 @@ export const AcceptInvitationPage = () => {
 
   if (verifyLoading) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.18),_transparent_30%),linear-gradient(180deg,#f8fafc_0%,#e0f2fe_100%)] px-4 py-12 dark:bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.2),_transparent_30%),linear-gradient(180deg,#020617_0%,#0f172a_100%)]">
+      <div className="min-h-screen min-h-[100dvh] bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.18),_transparent_30%),linear-gradient(180deg,#f8fafc_0%,#e0f2fe_100%)] px-3 py-6 dark:bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.2),_transparent_30%),linear-gradient(180deg,#020617_0%,#0f172a_100%)] sm:px-4 sm:py-12">
         <div className="mx-auto max-w-3xl">
           <LoadingBlock label="Verifying invitation..." />
         </div>
@@ -427,9 +427,9 @@ export const AcceptInvitationPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.18),_transparent_30%),linear-gradient(180deg,#f8fafc_0%,#e0f2fe_100%)] px-4 py-12 dark:bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.2),_transparent_30%),linear-gradient(180deg,#020617_0%,#0f172a_100%)]">
+    <div className="min-h-screen min-h-[100dvh] bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.18),_transparent_30%),linear-gradient(180deg,#f8fafc_0%,#e0f2fe_100%)] px-3 py-6 dark:bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.2),_transparent_30%),linear-gradient(180deg,#020617_0%,#0f172a_100%)] sm:px-4 sm:py-12">
       <div className="mx-auto max-w-3xl">
-        <Card className="p-8">
+        <Card className="p-4 sm:p-8">
           <PageHeader
             title="Accept Invitation"
             description={verification ? 'Create your account to continue into the Tapro workspace.' : 'This page verifies the invitation token before account creation.'}
