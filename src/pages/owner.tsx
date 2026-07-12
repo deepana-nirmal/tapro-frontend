@@ -5,7 +5,7 @@ import { categoryService, invitationService, menuService, orderService, ownerAna
 import { CategoryWorkspace } from '../components/category/CategoryWorkspace';
 import { useAppSelector, useAsyncResource } from '../hooks';
 import { ImageWithFallback, initialsFromName } from '../components/shared/ImageWithFallback';
-import { Button, Card, DataTable, Input, LoadingBlock, OrderItemsList, PageHeader, Select, StatusBadge, Textarea } from '../components/ui';
+import { Button, Card, DataTable, FileUploader, Input, LoadingBlock, OrderItemsList, PageHeader, Select, StatusBadge, Textarea } from '../components/ui';
 import { OwnerAlert, OwnerFilterBar, OwnerMetricCard, OwnerPageHeader, OwnerQuickAction } from '../components/owner/OwnerWorkspace';
 import { formatCurrency, formatDateTime } from '../utils/format';
 import { validateImageFile } from '../utils/upload';
@@ -198,37 +198,33 @@ export const RestaurantProfilePage = () => {
               <p className="text-sm text-slate-500">Upload JPG, PNG, or WEBP up to 5MB.</p>
             </div>
           </div>
-          <label className="inline-flex cursor-pointer items-center rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200">
-            {logoUploading ? 'Uploading...' : 'Upload Logo'}
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              className="hidden"
-              disabled={logoUploading}
-              onChange={async (event) => {
-                const file = event.target.files?.[0];
-                event.target.value = '';
-                if (!file) {
-                  return;
-                }
+          <FileUploader
+            label={logoUploading ? 'Uploading logo...' : 'Upload Logo'}
+            accept="image/png,image/jpeg,image/webp"
+            disabled={logoUploading}
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              event.target.value = '';
+              if (!file) {
+                return;
+              }
 
-                setLogoUploading(true);
-                try {
-                  validateImageFile(file);
-                  setLogoPreviewUrl(URL.createObjectURL(file));
-                  await restaurantService.uploadOwnerLogo(file);
-                  setRefreshKey((value) => value + 1);
-                  setLogoPreviewUrl('');
-                  toast.success('Restaurant logo updated');
-                } catch (uploadError: any) {
-                  setLogoPreviewUrl('');
-                  toast.error(uploadError?.response?.data?.message || uploadError?.message || 'Could not upload image. Please try another image under 5MB.');
-                } finally {
-                  setLogoUploading(false);
-                }
-              }}
-            />
-          </label>
+              setLogoUploading(true);
+              try {
+                validateImageFile(file);
+                setLogoPreviewUrl(URL.createObjectURL(file));
+                await restaurantService.uploadOwnerLogo(file);
+                setRefreshKey((value) => value + 1);
+                setLogoPreviewUrl('');
+                toast.success('Restaurant logo updated');
+              } catch (uploadError: any) {
+                setLogoPreviewUrl('');
+                toast.error(uploadError?.response?.data?.message || uploadError?.message || 'Could not upload image. Please try another image under 5MB.');
+              } finally {
+                setLogoUploading(false);
+              }
+            }}
+          />
         </div>
         <form
           className="grid gap-4 md:grid-cols-2"
@@ -1004,10 +1000,7 @@ export const MenuItemsManagementPage = () => {
             {!categories?.length ? <p className="text-sm text-amber-600">No categories yet. Create a category first.</p> : null}
             <Textarea label="Ingredients" value={form.ingredients} onChange={(event) => setForm({ ...form, ingredients: event.target.value })} placeholder="Tomato, Basil, Olive oil" />
             <Textarea label="Allergens" value={form.allergens} onChange={(event) => setForm({ ...form, allergens: event.target.value })} placeholder="Dairy, Nuts" />
-            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-100">
-              <span>Image Upload</span>
-              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => setCreateImageFile(event.target.files?.[0] || null)} />
-            </label>
+            <FileUploader label="Image Upload" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => setCreateImageFile(event.target.files?.[0] || null)} description={createImageFile?.name} />
             <Select label="Status" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN' })}>
               <option value="AVAILABLE">Available</option>
               <option value="OUT_OF_STOCK">Out Of Stock</option>
@@ -1116,10 +1109,7 @@ export const MenuItemsManagementPage = () => {
               </Select>
               <Textarea label="Ingredients" value={editForm.ingredients} onChange={(event) => setEditForm({ ...editForm, ingredients: event.target.value })} />
               <Textarea label="Allergens" value={editForm.allergens} onChange={(event) => setEditForm({ ...editForm, allergens: event.target.value })} />
-              <label className="flex flex-col gap-2 text-sm font-medium text-slate-700 dark:text-slate-100">
-                <span>Replace Image</span>
-                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => setEditImageFile(event.target.files?.[0] || null)} />
-              </label>
+              <FileUploader label="Replace Image" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => setEditImageFile(event.target.files?.[0] || null)} description={editImageFile?.name} />
               <Select label="Status" value={editForm.status} onChange={(event) => setEditForm({ ...editForm, status: event.target.value as 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN' })}>
                 <option value="AVAILABLE">Available</option>
                 <option value="OUT_OF_STOCK">Out Of Stock</option>
