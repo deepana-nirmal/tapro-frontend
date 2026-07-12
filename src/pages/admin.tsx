@@ -577,7 +577,7 @@ export const SuperAdminUsersManagementPage = () => {
                 <option value="disabled">Disabled</option>
               </Select>
               {modalError ? <p className="md:col-span-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{modalError}</p> : null}
-              <div className="md:col-span-2 flex gap-3">
+              <div className="flex flex-wrap gap-3 md:col-span-2">
                 <Button type="submit" disabled={submitting}>{submitting ? 'Saving...' : editingUser ? 'Save changes' : 'Create user'}</Button>
                 <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>Cancel</Button>
               </div>

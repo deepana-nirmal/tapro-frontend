@@ -76,7 +76,7 @@ const PasswordField = ({
         />
         <button
           type="button"
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-800"
+          className="absolute right-1 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
           onClick={() => setVisible((current) => !current)}
           aria-label={visible ? 'Hide password' : 'Show password'}
         >

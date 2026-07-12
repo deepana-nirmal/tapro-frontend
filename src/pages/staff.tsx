@@ -28,7 +28,7 @@ export const ManagerMenuPage = () => {
             { key: 'item', label: 'Item', render: (row) => row.name },
             { key: 'price', label: 'Price', render: (row) => formatCurrency(row.price, row.restaurantCurrencyCode || 'LKR') },
             { key: 'availability', label: 'Availability', render: (row) => <StatusBadge value={row.status} /> },
-            { key: 'actions', label: 'Actions', render: () => <div className="flex gap-2"><Button variant="ghost">Edit</Button><Button variant="ghost">Create Category</Button></div> },
+            { key: 'actions', label: 'Actions', render: () => <div className="flex flex-wrap gap-2"><Button variant="ghost">Edit</Button><Button variant="ghost">Create Category</Button></div> },
           ]}
           rows={items || []}
         />
@@ -54,7 +54,7 @@ export const ManagerOrdersPage = () => {
               key: 'actions',
               label: 'Actions',
               render: (row) => (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button variant="ghost">Assign</Button>
                   <Button variant="ghost" onClick={async () => { const updated = await orderService.updateStatus(row.id, 'PREPARING'); setData((orders || []).map((entry) => entry.id === row.id ? updated : entry)); toast.success('Order updated'); }}>Update</Button>
                 </div>
@@ -102,7 +102,7 @@ export const KitchenDashboardPage = () => {
         {(metrics || []).map((metric) => <StatCard key={metric.label} {...metric} />)}
       </div>
       <Card>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Button variant={tab === 'ACTIVE' ? 'primary' : 'ghost'} onClick={() => setTab('ACTIVE')}>Active Orders</Button>
           <Button variant={tab === 'PAST' ? 'primary' : 'ghost'} onClick={() => setTab('PAST')}>Past Orders</Button>
         </div>
@@ -118,7 +118,7 @@ export const KitchenDashboardPage = () => {
               key: 'actions',
               label: 'Actions',
               render: (row: any) => (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {row.status === 'PENDING' ? <Button variant="ghost" onClick={async () => { await orderService.kitchenUpdateStatus(row.id, 'PREPARING'); setRefreshKey((value) => value + 1); toast.success('Marked preparing'); }}>Mark Preparing</Button> : null}
                   {row.status === 'PREPARING' ? <Button onClick={async () => { await orderService.kitchenUpdateStatus(row.id, 'READY'); setRefreshKey((value) => value + 1); toast.success('Marked ready'); }}>Mark Ready</Button> : null}
                   {row.status === 'READY' ? <Button onClick={async () => { await orderService.kitchenUpdateStatus(row.id, 'COMPLETED'); setRefreshKey((value) => value + 1); toast.success('Marked completed'); }}>Mark Completed</Button> : null}
@@ -157,7 +157,7 @@ export const BillingPage = () => {
             { key: 'table', label: 'Table', render: (row) => row.tableNumber },
             { key: 'items', label: 'Items', render: (row) => <OrderItemsList items={row.items} currencyCode={row.restaurantCurrencyCode || 'LKR'} emptyLabel="Could not load orders." /> },
             { key: 'amount', label: 'Amount', render: (row) => formatCurrency(row.totalAmount, row.restaurantCurrencyCode || 'LKR') },
-            { key: 'receipt', label: 'Receipt', render: () => <div className="flex gap-2"><Button variant="ghost">View Bill</Button><Button>Print Receipt</Button></div> },
+            { key: 'receipt', label: 'Receipt', render: () => <div className="flex flex-wrap gap-2"><Button variant="ghost">View Bill</Button><Button>Print Receipt</Button></div> },
           ]}
           rows={orders || []}
         />
@@ -182,7 +182,7 @@ export const PaymentsPage = () => {
               key: 'actions',
               label: 'Actions',
               render: (row) => (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button variant="ghost">Cash</Button>
                   <Button variant="ghost">Card</Button>
                   <Button onClick={async () => { const updated = await orderService.updateStatus(row.id, 'COMPLETED'); setData((orders || []).map((entry) => entry.id === row.id ? updated : entry)); toast.success('Order closed'); }}>Mark Paid</Button>

@@ -279,6 +279,27 @@
     touch-action: manipulation;
   }
 
+  input,
+  select,
+  textarea,
+  button {
+    min-width: 0;
+  }
+
+  table {
+    max-width: 100%;
+  }
+
+  td,
+  th {
+    overflow-wrap: anywhere;
+  }
+
+  [class*='grid-cols-'],
+  [class*='flex'] {
+    min-width: 0;
+  }
+
   input[type='file'] {
     width: 100%;
   }
