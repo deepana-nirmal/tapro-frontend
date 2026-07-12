@@ -9,6 +9,7 @@ import { Button, Card, DataTable, Input, LoadingBlock, OrderItemsList, PageHeade
 import { OwnerAlert, OwnerFilterBar, OwnerMetricCard, OwnerPageHeader, OwnerQuickAction } from '../components/owner/OwnerWorkspace';
 import { formatCurrency, formatDateTime } from '../utils/format';
 import { validateImageFile } from '../utils/upload';
+import { normalizeApiError } from '../utils/errorMessages';
 import { CurrencyCode, MenuItem, OwnerInvitationRole, RestaurantFormValues, RestaurantTable } from '../types';
 import { analyticsHasData, filterMenuItemsForOwner, filterStaffForOwner, filterTablesForOwner, orderStatusCounts, ownerReadinessSummary } from '../utils/ownerWorkspace';
 
@@ -984,7 +985,7 @@ export const MenuItemsManagementPage = () => {
                 resetCreateForm();
                 toast.success('Menu item created');
               } catch (submitError: any) {
-                const message = submitError?.response?.data?.message || submitError?.message || 'Unable to create menu item.';
+                const message = normalizeApiError(submitError, 'Unable to create menu item.');
                 setCreateError(message);
                 toast.error(message);
               } finally {
@@ -1098,7 +1099,7 @@ export const MenuItemsManagementPage = () => {
                   setEditingItemId(null);
                   toast.success('Menu item updated');
                 } catch (submitError: any) {
-                  const message = submitError?.response?.data?.message || submitError?.message || 'Unable to update menu item.';
+                  const message = normalizeApiError(submitError, 'Unable to update menu item.');
                   setEditError(message);
                   toast.error(message);
                 } finally {
