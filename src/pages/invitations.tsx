@@ -2,10 +2,12 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { invitationService, persistSession, restaurantService } from '../api/services';
+import { PasswordField } from '../components/auth/AuthComponents';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { restoreSession } from '../store/authSlice';
 import { Button, Card, Input, LoadingBlock, PageHeader, Select } from '../components/ui';
 import { invitationPathByBackendRole } from '../utils/auth';
+import { normalizeAuthError } from '../utils/errorMessages';
 import { Invitation, InvitationRole, InvitationVerifyResponse, Restaurant } from '../types';
 
 const invitationRoles: Record<'SUPER_ADMIN' | 'OWNER', Array<{ value: InvitationRole; label: string }>> = {
@@ -351,9 +353,9 @@ export const AcceptInvitationPage = () => {
         } else {
           setVerification(result);
         }
-      } catch (error: any) {
+      } catch (error) {
         if (active) {
-          setVerifyError(error?.response?.data?.message || 'Unable to verify this invitation.');
+          setVerifyError(normalizeAuthError(error, 'Unable to verify this invitation.'));
           setVerification(null);
         }
       } finally {
@@ -407,8 +409,8 @@ export const AcceptInvitationPage = () => {
       await dispatch(restoreSession());
       toast.success('Account created successfully');
       navigate(invitationPathByBackendRole[auth.role || auth.user.backendRole], { replace: true });
-    } catch (error: any) {
-      const message = error?.response?.data?.message || 'Unable to accept the invitation.';
+    } catch (error) {
+      const message = normalizeAuthError(error, 'Unable to accept the invitation.');
       setSubmitError(message);
       toast.error(message);
     } finally {
@@ -457,13 +459,15 @@ export const AcceptInvitationPage = () => {
                   onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                   required
                 />
-                <Input
+                <PasswordField
+                  name="password"
                   label="Password"
-                  type="password"
+                  autoComplete="new-password"
+                  helperText="Use at least 6 characters."
                   value={form.password}
                   error={errors.password}
-                  onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-                  required
+                  onChange={(value) => setForm((current) => ({ ...current, password: value }))}
+                  disabled={submitting}
                 />
                 {submitError ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{submitError}</p> : null}
                 <Button type="submit" className="w-full sm:w-fit" disabled={submitting}>

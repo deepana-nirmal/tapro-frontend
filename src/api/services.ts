@@ -44,6 +44,7 @@ import {
   mockSubscriptions,
 } from '../data/mock';
 import { buildSessionUser, normalizeRole, toBackendRole } from '../utils/auth';
+import { clearAuthSession, persistSession as persistAuthSession } from '../utils/authStorage';
 
 const demoMode = process.env.REACT_APP_DEMO_MODE === 'true';
 const apiBaseUrl = baseURL;
@@ -135,18 +136,20 @@ const normalizeOrder = (order: Order): Order => ({
   restaurantCurrencyCode: resolveCurrencyCode(order.restaurantCurrencyCode),
 });
 
-export const persistSession = (token: string, user: SessionUser) => {
-  localStorage.setItem('tapro_token', token);
-  localStorage.setItem('tapro_user', JSON.stringify(user));
+export const persistSession = (token: string, user: SessionUser, rememberMe = true) => {
+  persistAuthSession(token, user, rememberMe);
 };
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<ApiEnvelope<{ token: string; role: string; restaurantId?: number | null }>>('/auth/login', credentials);
+      const response = await apiClient.post<ApiEnvelope<{ token: string; role: string; restaurantId?: number | null }>>('/auth/login', {
+        email: credentials.email,
+        password: credentials.password,
+      });
       const payload = unwrap(response.data);
       const user = buildSessionUser(payload.token, credentials.email, payload.role, payload.restaurantId);
-      persistSession(payload.token, user);
+      persistSession(payload.token, user, Boolean(credentials.rememberMe));
       return { token: payload.token, user, role: user.backendRole, restaurantId: payload.restaurantId };
     } catch (error) {
       if (!demoMode) {
@@ -156,7 +159,7 @@ export const authService = {
       const backendRole = toBackendRole(credentials.email.includes('admin') ? 'SUPER_ADMIN' : credentials.email.includes('owner') ? 'RESTAURANT_OWNER' : credentials.email.includes('kitchen') ? 'KITCHEN_STAFF' : credentials.email.includes('cashier') ? 'CASHIER' : credentials.email.includes('manager') ? 'MANAGER' : 'CUSTOMER');
       const fakeToken = `demo.${btoa(JSON.stringify({ sub: credentials.email, role: backendRole, exp: Math.floor(Date.now() / 1000) + 86400 }))}.signature`;
       const user = buildSessionUser(fakeToken, credentials.email, backendRole, 1);
-      persistSession(fakeToken, user);
+      persistSession(fakeToken, user, Boolean(credentials.rememberMe));
       return { token: fakeToken, user, role: user.backendRole, restaurantId: 1 };
     }
   },
@@ -187,8 +190,7 @@ export const authService = {
   },
 
   logout() {
-    localStorage.removeItem('tapro_token');
-    localStorage.removeItem('tapro_user');
+    clearAuthSession();
   },
 };
 
