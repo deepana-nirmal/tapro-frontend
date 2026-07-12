@@ -16,7 +16,9 @@ import {
   ResetPasswordPage,
 } from './pages/auth';
 import { AcceptInvitationPage, AdminInvitationsPage } from './pages/invitations';
-import { LandingPage, CheckoutPage, RestaurantMenuPage, TrackOrderPage } from './pages/public';
+import { CheckoutPage, RestaurantMenuPage, TrackOrderPage } from './pages/public';
+import { LandingPage } from './pages/LandingPage';
+import { PrivacyPolicyPage, TermsPage } from './pages/legal';
 import {
   InvitationManagementPage,
   PlatformReportsPage,
@@ -83,6 +85,8 @@ const AppRoutes = () => {
       <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route path="/accept-invite" element={<AcceptInvitationPage />} />
       <Route path="/invite/accept" element={<AcceptInvitationPage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
       <Route path="/menu/:restaurantId/table/:tableId" element={<RestaurantMenuPage />} />
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/orders/track/:orderId" element={<TrackOrderPage />} />

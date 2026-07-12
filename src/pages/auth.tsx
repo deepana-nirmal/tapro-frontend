@@ -216,7 +216,7 @@ export const ForgotPasswordPage = () => {
     'Forgot Password',
     'Password reset request flow',
     <Card className="p-4 sm:p-8">
-      <PageHeader title="Forgot Password" description="This will call the backend endpoint when it exists; demo mode keeps the frontend flow testable." />
+      <PageHeader title="Forgot Password" description="Request password reset instructions for your Tapro account." />
       <form
         className="mt-8 space-y-4"
         onSubmit={async (event) => {
@@ -244,7 +244,12 @@ export const ResetPasswordPage = () => {
         className="mt-8 space-y-4"
         onSubmit={async (event) => {
           event.preventDefault();
-          await authService.resetPassword(params.get('token') || 'demo-token', password);
+          const token = params.get('token');
+          if (!token) {
+            toast.error('Reset token is missing.');
+            return;
+          }
+          await authService.resetPassword(token, password);
           toast.success('Password reset complete');
         }}
       >

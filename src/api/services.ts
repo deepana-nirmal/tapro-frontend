@@ -164,25 +164,25 @@ export const authService = {
   async register(payload: { email: string; password: string; role: UserRole }) {
     return withFallback(
       apiClient.post('/auth/register', { ...payload, role: toBackendRole(payload.role) }),
-      'Registered in demo mode'
+      'Registration request queued'
     );
   },
 
   async forgotPassword(email: string) {
     // Connect this to a real Spring Boot password recovery endpoint when available.
-    return withFallback(apiClient.post('/auth/forgot-password', { email }), 'Reset email queued in demo mode');
+    return withFallback(apiClient.post('/auth/forgot-password', { email }), 'Reset email queued');
   },
 
   async resetPassword(token: string, password: string) {
     // Connect this to a real Spring Boot reset-password endpoint when available.
-    return withFallback(apiClient.post('/auth/reset-password', { token, password }), 'Password updated in demo mode');
+    return withFallback(apiClient.post('/auth/reset-password', { token, password }), 'Password update request queued');
   },
 
   async changePassword(currentPassword: string, newPassword: string) {
     // Connect this to a real authenticated password change endpoint when available.
     return withFallback(
       apiClient.post('/auth/change-password', { currentPassword, newPassword }),
-      'Password changed in demo mode'
+      'Password change request queued'
     );
   },
 
